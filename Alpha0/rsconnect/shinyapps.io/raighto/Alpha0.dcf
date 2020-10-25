@@ -1,0 +1,12 @@
+name: Alpha0
+title: Alpha0
+username:
+account: raighto
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3091143
+bundleId: 3780446
+url: https://raighto.shinyapps.io/Alpha0/
+when: 1603641000.28428
+asMultiple: FALSE
+asStatic: FALSE
