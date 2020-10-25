@@ -47,5 +47,9 @@
 
 Zufriedenheit <- as.integer(rnorm(100,5,2))
 sex <- rbinom(100,1,.5)
-einkommen <- as.integer(rnorm(100,2,4))
-df <- data.frame(sex,Zufriedenheit,einkommen)
+einkommen <- as.integer(sample(100,100, T))
+mig <- sample(1:3, 100, replace = T)
+df <- data.frame(sex,Zufriedenheit,einkommen,mig)
+
+
+
