@@ -9,9 +9,9 @@
 
 library(shiny)
 library(ggvis)
-options(shiny.erro = browser)
+#options(shiny.error = browser)
 
-# For dropdown menu
+# For dropdown menu #useless?
 actionLink <- function(inputId, ...) {
     tags$a(href='javascript:void',
            id=inputId,
@@ -27,8 +27,9 @@ ui <- fluidPage(
         column(3,
             wellPanel(
                 h4("Filter"),
-                sliderInput("sex", "Geschlecht", 0, 1, 0, step = 1)
-            )
+                sliderInput("einkommen", "Einkommen", 0, 100, c(0,100), step = 1),
+                selectInput("sex", "Geschlecht", c("Beide","Weiblich","Maennlich"))
+                      )
 
 
                ),
@@ -65,19 +66,22 @@ server <- function(input, output) {
     
     # filter the obs, returning a subset dataframe
     dfs <- reactive({ 
-        Sex <- input$sex   #first creating temp var, because of issues with dplyr, maybe solved.
-        
+        tempMinEinkommen <- input$einkommen[1]   #first creating temp var, because of issues with dplyr, maybe solved.
+        tempMaxEinkommen <- input$einkommen[2] 
         #apply filters
         tempD <-  df %>% 
-            filter(sex == Sex) 
+            filter(
+                einkommen >= tempMinEinkommen,
+                einkommen <= tempMaxEinkommen
+                ) 
         #%>% arrange(Zufriedenheit) 
         
-        # Optional: filter by genre
-        # if (input$genre != "All") {
-        #     genre <- paste0("%", input$genre, "%")
-        #     m <- m %>% filter(Genre %like% genre)
-        # }
-        # 
+       # Optional: filter by genre
+        if (input$sex != c("Beide")) {
+            tempSex <- if_else(input$sex == "Weiblich",1,0)
+            tempD <- df %>% filter(sex ==tempSex)
+        }
+
         tempD <- as.data.frame(tempD)
         })
     
@@ -110,7 +114,7 @@ server <- function(input, output) {
         # yvar <- d$Zufriedenheit
         # 
         dfs %>% 
-            ggvis(x = ~sex, y = ~Zufriedenheit) #%<% 
+            ggvis(x = ~einkommen, y = ~Zufriedenheit) #%<% 
             #layer_points(size:=50:)
         
     })
