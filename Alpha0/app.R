@@ -28,9 +28,15 @@ ui <- fluidPage(
             wellPanel(
                 h4("Filter"),
                 sliderInput("einkommen", "Einkommen", 0, 100, c(0,100), step = 1),
-                selectInput("sex", "Geschlecht", c("Beide","Weiblich","Maennlich"))
-                      )
+                selectInput("sex", "Geschlecht", c("Beide","Weiblich","Maennlich")),
+                textInput("stimmung", "Stimmung eingeben z.b. hoffnungsvoll")
+            ),
+            wellPanel(
+                selectInput("xvar", "X-Achse-Variable bestimmen", axis_vars, selected = "einkommen"),
+                selectInput("yvar", "Y-Achse var bestimmen", axis_vars, selected = "Zufriedenheit")
 
+                
+            )
 
                ),
         column(9,
@@ -108,13 +114,13 @@ server <- function(input, output) {
         
         # Normally we could do something like props(x = ~BoxOffice, y = ~Reviews),
         # but since the inputs are strings, we need to do a little more work.
-        # xvar <- prop("x", as.symbol(input$xvar))
-        # yvar <- prop("y", as.symbol(input$yvar))
+          xvar <- prop("x", as.symbol(input$xvar))
+          yvar <- prop("y", as.symbol(input$yvar))
         # xvar <- 1
         # yvar <- d$Zufriedenheit
         # 
         dfs %>% 
-            ggvis(x = ~einkommen, y = ~Zufriedenheit) #%<% 
+            ggvis(x = xvar, y = yvar) #%<% 
             #layer_points(size:=50:)
         
     })
