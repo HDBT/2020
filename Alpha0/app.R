@@ -9,6 +9,7 @@
 
 library(shiny)
 library(ggvis)
+source("global.r")
 #options(shiny.error = browser)
 
 # For dropdown menu #useless?
