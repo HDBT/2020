@@ -30,7 +30,7 @@ ui <- fluidPage(
                 h4("Filter"),
                 sliderInput("einkommen", "Einkommen", 0, 100, c(0,100), step = 1),
                 selectInput("sex", "Geschlecht", c("Beide","Weiblich","Maennlich")),
-                textInput("stimmung", "Stimmung eingeben z.b. hoffnungsvoll")
+                textInput("emotion", "Stimmung eingeben z.b. hoffnungsvoll")
             ),
             wellPanel(
                 selectInput("xvar", "X-Achse-Variable bestimmen", axis_vars, selected = "einkommen"),
@@ -41,8 +41,11 @@ ui <- fluidPage(
 
                ),
         column(9,
-               ggvisOutput(("plot1")
-                           ))
+               ggvisOutput("plot1"),
+               wellPanel( span("Anzahl der Fälle:", textOutput("N"))
+        
+              )
+        )
     )
 )
     # Sidebar with a slider input for number of bins 
@@ -66,6 +69,7 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 library(ggvis) 
 library(dplyr)
+library(data.table)
 source("global.r")
 #write.csv(df,"df.csv")
 options(shiny.reactlog = T)
@@ -83,29 +87,38 @@ server <- function(input, output) {
                 ) 
         #%>% arrange(Zufriedenheit) 
         
-       # Optional: filter by genre
+       # Optional: filter by geschlecht dropdown
         if (input$sex != c("Beide")) {
             tempSex <- if_else(input$sex == "Weiblich",1,0)
             tempD <- df %>% filter(sex ==tempSex)
         }
 
-        tempD <- as.data.frame(tempD)
-        })
+      
+        
     
+        #filter bei emotion 
+        # if (!is.null(input$emotion) && input$emotion != ""){
+        #     tempEmotion <- paste0("%", input$emotion, "%")
+        #     tempD <- tempD$emotion[tempD$emotion %like%  tempEmotion]
+        # }
+        # 
+        
+      tempD <- as.data.frame(tempD)
+    
+    })
     # Function for generating tooltip text
-    # movie_tooltip <- function(x) {
-    #     if (is.null(x)) return(NULL)
-    #     if (is.null(x$ID)) return(NULL)
-    #     
-    #     # Pick out the movie with this ID
-    #     all_movies <- isolate(movies())
-    #     movie <- all_movies[all_movies$ID == x$ID, ]
-    #     
-    #     paste0("<b>", movie$Title, "</b><br>",
-    #            movie$Year, "<br>",
-    #            "$", format(movie$BoxOffice, big.mark = ",", scientific = FALSE)
-    #     )
-    # }
+    genTooltip <- function(x) {
+        if (is.null(x)) return(NULL)
+        if (is.null(x$id)) return(NULL)
+        
+        isolDfs <- isolate(dfs())
+        info <- isolDfs[isolDfs$id == x$id,]
+        
+        paste0("<b>", info$sex, "</b><br>",
+               "$",info$einkommen, "<br>", format(info$Zufriedenheit, big.mark = ",", scientific = FALSE)
+        )
+        
+    }
 
     # A reactive expression with the ggvis plot
     vis <- reactive({
@@ -121,12 +134,17 @@ server <- function(input, output) {
         # yvar <- d$Zufriedenheit
         # 
         dfs %>% 
-            ggvis(x = xvar, y = yvar) #%<% 
-            #layer_points(size:=50:)
-        
+            ggvis(x = xvar, y = yvar) %>% 
+            layer_points(size := 50, size.hover := 200, fillOpacity := 0.2, fillOpacity.hover := 0.5, stroke = ~covid, key := ~id) %>%
+            add_tooltip(genTooltip,"hover") %>%
+            add_legend("stroke",title = "Hatte Corona Erfahrung in soz. Umkreis", values = c("Ja","Nein")) %>%
+            scale_nominal("stroke", domain =  c("Ja","Nein"), range = c("orange","lightblue")) %>%
+            set_options(width = 800, height =  600)
+            
     })
     
     vis %>% bind_shiny("plot1")
+    output$N <- renderText({ nrow((dfs())) })
 }
     
     #output$n_movies <- renderText({ nrow(movies()) })

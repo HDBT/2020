@@ -49,8 +49,10 @@ Zufriedenheit <- as.integer(rnorm(100,5,2))
 sex <- rbinom(100,1,.5)
 einkommen <- as.integer(sample(100,100, T))
 mig <- sample(1:3, 100, replace = T)
-stimmung <- sample(c("hoffnung", "angst", "traurig", "wut", "misstrauen"),100,T)
-df <- data.frame(sex,Zufriedenheit,einkommen,mig)
+emotion <- sample(c("hoffnung", "angst", "traurig", "wut", "misstrauen"),100,T)
+covid <- sample(c("covid1","covid2"),100, replace = T, prob =c(0.5,.2))
+id <- 1:100
+df <- data.frame(sex,Zufriedenheit,einkommen,mig,covid,id,emotion)
 
 
 # Variables that can be put on the x and y axes
