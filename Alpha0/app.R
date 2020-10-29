@@ -9,9 +9,12 @@
 
 library(shiny)
 library(ggvis)
+library(highcharter)
+
+#library(shinycustomloader)
 source("global.r")
 #options(shiny.error = browser)
-
+#install.packages("shinycustomloader")
 # For dropdown menu #useless?
 actionLink <- function(inputId, ...) {
     tags$a(href='javascript:void',
@@ -34,17 +37,16 @@ ui <- fluidPage(
             ),
             wellPanel(
                 selectInput("xvar", "X-Achse-Variable bestimmen", axis_vars, selected = "einkommen"),
-                selectInput("yvar", "Y-Achse var bestimmen", axis_vars, selected = "Zufriedenheit")
-
+                selectInput("yvar", "Y-Achse var bestimmen", axis_vars, selected = "Zufriedenheit"),
+                selectInput("chart","Streu oder Box-Plot?", c("Streu", "Box"), selected = "Streu")
                 
             )
 
                ),
         column(9,
                ggvisOutput("plot1"),
-               wellPanel( span("Anzahl der Fälle:", textOutput("N"))
-        
-              )
+               wellPanel( span("Anzahl der Fälle:", textOutput("N"))),
+               highchartOutput("hcontainer")
         )
     )
 )
@@ -70,6 +72,7 @@ ui <- fluidPage(
 library(ggvis) 
 library(dplyr)
 library(data.table)
+library(highcharter)
 source("global.r")
 #write.csv(df,"df.csv")
 options(shiny.reactlog = T)
@@ -145,6 +148,35 @@ server <- function(input, output) {
     
     vis %>% bind_shiny("plot1")
     output$N <- renderText({ nrow((dfs())) })
+    
+    dat <- data_to_boxplot(df, Zufriedenheit, sex,name = "Unterschiede in Zufriedenheit") #fuer highcharter box
+    output$hcontainer <- renderHighchart ({
+        
+        #write all R-code inside this
+        
+        # df  <- inf %>% filter(region==input$country) #making the dataframe of the country
+        # #above input$country is used to extract the select input value from the UI and then make 
+        # #a dataframe based on the selected input
+        # df$inflation <- as.numeric(df$inflation)
+        # df$year <- as.numeric(df$year)
+        
+        #plotting the data
+      hchart(df%>% filter(sex == 0), type = "point", hcaes(x = Zufriedenheit, y = einkommen), name = "Männer") %>%
+        hc_add_series(df %>% filter(sex == 1), type = "point", mapping = hcaes(x = Zufriedenheit, y = einkommen), name = "Frauen", fast = FALSE) 
+      
+       #highchart() %>%hc_xAxis(type = "category") %>%hc_add_series_list(dat) 
+       ## Not run:## End(Not run)data_to_hierarchicalHelper to transform data frame for treemap/sunburst highcharts for-matDescriptionHelper to transform data frame for treemap/sunburst highcharts format
+       #  hchart(df%>% filter(sex == 0), type = "point", hcaes(x = Zufriedenheit, y = einkommen), name = "Männer") %>%
+        #     hc_add_series(df %>% filter(sex == 1), type = "point", mapping = hcaes(x = Zufriedenheit, y = einkommen), name = "Frauen", fast = FALSE)
+        #) 
+            # hc_exporting(enabled = TRUE) %>% 
+            # hc_tooltip(crosshairs = TRUE, backgroundColor = "#FCFFC5",
+            #            shared = TRUE, borderWidth = 2) %>%
+            # hc_title(text="Time series plot of Inflation Rates",align="center") %>%
+            # hc_subtitle(text="Data Source: IMF",align="center") %>%
+            # hc_add_theme(hc_theme_elementary()) 
+        
+    }) # end hcontainer
 }
     
     #output$n_movies <- renderText({ nrow(movies()) })
