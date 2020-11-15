@@ -46,7 +46,12 @@ ui <- fluidPage(
         column(9,
                ggvisOutput("plot1"),
                wellPanel( span("Anzahl der Fälle:", textOutput("N"))),
-               highchartOutput("hcontainer")
+               
+              conditionalPanel("input.chart == 'Streu'",
+                                highchartOutput("hcontainer")),
+               conditionalPanel("input.chart == 'Box'", 
+                                highchartOutput("chart2"))
+               
         )
     )
 )
@@ -177,6 +182,9 @@ server <- function(input, output) {
             # hc_add_theme(hc_theme_elementary()) 
         
     }) # end hcontainer
+    output$chart2 <- renderHighchart ({
+                  highchart() %>% hc_xAxis(type = "category") %>% hc_add_series_list(dat) 
+    })
 }
     
     #output$n_movies <- renderText({ nrow(movies()) })
