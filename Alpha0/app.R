@@ -22,32 +22,49 @@ actionLink <- function(inputId, ...) {
            class='action-button',
            ...)
 }
-# Define UI for application that draws a histogram
-ui <- fluidPage(
-    # Application title
+# UI
+ui <- fluidPage(#theme = "bootstrap.css",
     titlePanel("Titel"),
     
     fluidRow(
         column(3,
             wellPanel(
+                
+                selectInput("xvar", "X-Achse-Variable bestimmen", axis_vars, selected = "einkommen"),
+                actionButton("go2","2. Var"),
+                conditionalPanel(
+                  condition = "input.go2 >0",
+                  selectInput("yvar", "Y-Achse var bestimmen", axis_vars, selected = "Zufriedenheit")),
                 h4("Filter"),
-                sliderInput("einkommen", "Einkommen", 0, 100, c(0,100), step = 1),
-                selectInput("sex", "Geschlecht", c("Beide","Weiblich","Maennlich")),
-                textInput("emotion", "Stimmung eingeben z.b. hoffnungsvoll")
+                actionButton("go", "Filter"),
+                conditionalPanel(
+                      condition = "input.go > 0",
+                          selectInput("sex", "Geschlecht", c("Beide","Weiblich","Maennlich")),
+                          textInput("emotion", "Stimmung eingeben z.b. hoffnungsvoll"
+                          ),
+                      
+                      conditionalPanel(
+                          condition = "input.xvar == 'einkommen'",
+                          sliderInput("einkommen", "Einkommen", 0, 100, c(0,100), step = 1
+                          )
+                      )  
+                )
+                
             ),
             wellPanel(
-                selectInput("xvar", "X-Achse-Variable bestimmen", axis_vars, selected = "einkommen"),
-                selectInput("yvar", "Y-Achse var bestimmen", axis_vars, selected = "Zufriedenheit"),
-                selectInput("chart","Streu oder Box-Plot?", c("Streu", "Box"), selected = "Streu")
+                
+                selectInput("chart","Streu oder Box-Plot?", c("Streu", "Box"), selected = "Streu"),
+                actionButton("alt", "Alt")
                 
             )
 
                ),
         column(9,
-               ggvisOutput("plot1"),
+               conditionalPanel("input.alt > 0",
+                                ggvisOutput("plot1")),
                wellPanel( span("Anzahl der Fälle:", textOutput("N"))),
                
-              conditionalPanel("input.chart == 'Streu'",
+               conditionalPanel("input.chart == 'Streu'",
                                 highchartOutput("hcontainer")),
                conditionalPanel("input.chart == 'Box'", 
                                 highchartOutput("chart2"))
@@ -128,6 +145,10 @@ server <- function(input, output) {
         
     }
 
+    #toggle between ggvis and highchartR
+    whichplot <- reactiveVal(TRUE)  #start of as True 
+    
+    
     # A reactive expression with the ggvis plot
     vis <- reactive({
         #lables for axes 
@@ -154,6 +175,7 @@ server <- function(input, output) {
     vis %>% bind_shiny("plot1")
     output$N <- renderText({ nrow((dfs())) })
     
+    #boxplot + highchart
     dat <- data_to_boxplot(df, Zufriedenheit, sex,name = "Unterschiede in Zufriedenheit") #fuer highcharter box
     output$hcontainer <- renderHighchart ({
         
@@ -201,3 +223,6 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
+#comments
+# conditonalPanel Funktion auf Server verschieben. Sinnvoller, um Ressourcen zu sparen.
