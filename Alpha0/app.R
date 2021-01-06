@@ -6,13 +6,21 @@
 #
 #    http://shiny.rstudio.com/
 #
-
+#library(geojsonio)
 library(shiny)
+library(leaflet)
+library(shinydashboard)
+library(shinydashboardPlus)
+library(shinyWidgets)
 library(ggvis)
 library(highcharter)
-
+library(shinyjs)
+#install.packages("shiny.i18n")
+#install.packages("fusionchartsR")
+#require(fusionchartsR)
 #library(shinycustomloader)
 source("global.r")
+source("flipBox.R")
 #options(shiny.error = browser)
 #install.packages("shinycustomloader")
 # For dropdown menu #useless?
@@ -22,56 +30,63 @@ actionLink <- function(inputId, ...) {
            class='action-button',
            ...)
 }
+# sprache -----------------------------------------------------------------
+library(shiny.i18n) #dev version wegen google probs
+
+i18n <- Translator$new(translation_json_path = "translation.json")
+#i18n <- Translator$new(automatic = TRUE)
+i18n$set_translation_language('de')
+
 # UI
 ui <- fluidPage(#theme = "bootstrap.css",
-    titlePanel("Titel"),
-    
-    fluidRow(
-        column(3,
-            wellPanel(
-                
-                selectInput("xvar", "X-Achse-Variable bestimmen", axis_vars, selected = "einkommen"),
-                actionButton("go2","2. Var"),
-                conditionalPanel(
-                  condition = "input.go2 >0",
-                  selectInput("yvar", "Y-Achse var bestimmen", axis_vars, selected = "Zufriedenheit")),
-                h4("Filter"),
-                actionButton("go", "Filter"),
-                conditionalPanel(
-                      condition = "input.go > 0",
-                          selectInput("sex", "Geschlecht", c("Beide","Weiblich","Maennlich")),
-                          textInput("emotion", "Stimmung eingeben z.b. hoffnungsvoll"
-                          ),
-                      
-                      conditionalPanel(
-                          condition = "input.xvar == 'einkommen'",
-                          sliderInput("einkommen", "Einkommen", 0, 100, c(0,100), step = 1
-                          )
-                      )  
-                )
-                
-            ),
-            wellPanel(
-                
-                selectInput("chart","Streu oder Box-Plot?", c("Streu", "Box"), selected = "Streu"),
-                actionButton("alt", "Alt")
-                
-            )
 
-               ),
-        column(9,
-               conditionalPanel("input.alt > 0",
-                                ggvisOutput("plot1")),
-               wellPanel( span("Anzahl der Fälle:", textOutput("N"))),
-               
-               conditionalPanel("input.chart == 'Streu'",
-                                highchartOutput("hcontainer")),
-               conditionalPanel("input.chart == 'Box'", 
-                                highchartOutput("chart2"))
-               
-        )
-    )
-)
+  #tags$head(
+    #tags$style(HTML(".leaflet-container { background: #FFFFFF; }"))
+  #),
+  
+            
+              fluidRow(shiny.i18n::usei18n(i18n),
+            
+                        column(12, 
+                               flipBoxN(front_btn_text = "Meta-Information",
+                                      id = 1,
+                                      main_img = NULL,
+                                      header_img = NULL  ,
+                                      back_content  = "The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg.  
+                                      ",
+                                      radioGroupButtons("thema",i18n$t("Thema"), choiceNames = c("Identität","Politisches Interesse","Politische Aktion"),choiceValues = c("Identität","Politisches Interesse","Politische Aktion"), size = "sm",direction = "horizontal"),
+                                      fluidRow(
+                                         column(1,
+                                                radioGroupButtons("test",i18n$t("Sociodemographic"), choices = c("None","Migration", "Alter", "Geschlecht","Status"),size = "xs",direction = "vertical", selected = "None"),
+                                         ),       
+                                         column(11,
+                                                highchartOutput("hcchart1"),
+                                                
+                                                
+                                     
+                               
+                                                 #actionButton("mybutton", "action"),
+                                                 prettySwitch(inputId = "switch","Spaltendiagramm",slim = T, value = TRUE),
+                                                 tags$div(
+                                                   style='float: right;width: 100px',
+                                                   selectInput(
+                                                     inputId='selected_language',
+                                                     label=i18n$t('Change language'),
+                                                     choices = i18n$get_languages(),
+                                                     selected = i18n$get_key_translation()
+                                                   )
+                                                 )#,
+                                               #  highchartOutput("hcchart2")
+                                        )      
+                                 
+                                       ),
+                               )       
+                 )     
+                       )
+             ) 
+  
+      
+
     # Sidebar with a slider input for number of bins 
 #     sidebarLayout(
 #         sidebarPanel(
@@ -92,88 +107,175 @@ ui <- fluidPage(#theme = "bootstrap.css",
 
 # Define server logic required to draw a histogram
 library(ggvis) 
+library(plyr)
+#library(shinyjs)
 library(dplyr)
 library(data.table)
 library(highcharter)
 source("global.r")
 #write.csv(df,"df.csv")
 options(shiny.reactlog = T)
-server <- function(input, output) {
-    
-    # filter the obs, returning a subset dataframe
-    dfs <- reactive({ 
-        tempMinEinkommen <- input$einkommen[1]   #first creating temp var, because of issues with dplyr, maybe solved.
-        tempMaxEinkommen <- input$einkommen[2] 
-        #apply filters
-        tempD <-  df %>% 
-            filter(
-                einkommen >= tempMinEinkommen,
-                einkommen <= tempMaxEinkommen
-                ) 
-        #%>% arrange(Zufriedenheit) 
-        
-       # Optional: filter by geschlecht dropdown
-        if (input$sex != c("Beide")) {
-            tempSex <- if_else(input$sex == "Weiblich",1,0)
-            tempD <- df %>% filter(sex ==tempSex)
-        }
+server <- function(input, output,session) {
+    # 
+    # # filter the obs, returning a subset dataframe
+    # dfs <- reactive({ 
+    #     tempMinEinkommen <- input$einkommen[1]   #first creating temp var, because of issues with dplyr, maybe solved.
+    #     tempMaxEinkommen <- input$einkommen[2] 
+    #     #apply filters
+    #     tempD <-  df %>% 
+    #         filter(
+    #             einkommen >= tempMinEinkommen,
+    #             einkommen <= tempMaxEinkommen
+    #             ) 
+    #     #%>% arrange(Zufriedenheit) 
+    #     
+    #    # Optional: filter by geschlecht dropdown
+    #     if (input$sex != c("Beide")) {
+    #         tempSex <- if_else(input$sex == "Weiblich",1,0)
+    #         tempD <- df %>% filter(sex ==tempSex)
+    #     }
+    # 
+    #   
+    #     
+    # 
+    #     #filter bei emotion 
+    #     # if (!is.null(input$emotion) && input$emotion != ""){
+    #     #     tempEmotion <- paste0("%", input$emotion, "%")
+    #     #     tempD <- tempD$emotion[tempD$emotion %like%  tempEmotion]
+    #     # }
+    #     # 
+    #     
+    #   tempD <- as.data.frame(tempD)
+    # 
+    # })
+    # # Function for generating tooltip text
+    # genTooltip <- function(x) {
+    #     if (is.null(x)) return(NULL)
+    #     if (is.null(x$id)) return(NULL)
+    #     
+    #     isolDfs <- isolate(dfs())
+    #     info <- isolDfs[isolDfs$id == x$id,]
+    #     
+    #     paste0("<b>", info$sex, "</b><br>",
+    #            "$",info$einkommen, "<br>", format(info$Zufriedenheit, big.mark = ",", scientific = FALSE)
+    #     )
+    #     
+    # }
 
-      
-        
-    
-        #filter bei emotion 
-        # if (!is.null(input$emotion) && input$emotion != ""){
-        #     tempEmotion <- paste0("%", input$emotion, "%")
-        #     tempD <- tempD$emotion[tempD$emotion %like%  tempEmotion]
-        # }
-        # 
-        
-      tempD <- as.data.frame(tempD)
-    
-    })
-    # Function for generating tooltip text
-    genTooltip <- function(x) {
-        if (is.null(x)) return(NULL)
-        if (is.null(x$id)) return(NULL)
-        
-        isolDfs <- isolate(dfs())
-        info <- isolDfs[isolDfs$id == x$id,]
-        
-        paste0("<b>", info$sex, "</b><br>",
-               "$",info$einkommen, "<br>", format(info$Zufriedenheit, big.mark = ",", scientific = FALSE)
-        )
-        
-    }
 
-    #toggle between ggvis and highchartR
-    whichplot <- reactiveVal(TRUE)  #start of as True 
-    
-    
-    # A reactive expression with the ggvis plot
-    vis <- reactive({
-        #lables for axes 
-        # xvar_name <- names(axis_vars)[axis_vars == input$xvar]
-        # yvar_name <- names(axis_vars)[axis_vars == input$yvar]
-        
-        # Normally we could do something like props(x = ~BoxOffice, y = ~Reviews),
-        # but since the inputs are strings, we need to do a little more work.
-          xvar <- prop("x", as.symbol(input$xvar))
-          yvar <- prop("y", as.symbol(input$yvar))
-        # xvar <- 1
-        # yvar <- d$Zufriedenheit
-        # 
-        dfs %>% 
-            ggvis(x = xvar, y = yvar) %>% 
-            layer_points(size := 50, size.hover := 200, fillOpacity := 0.2, fillOpacity.hover := 0.5, stroke = ~covid, key := ~id) %>%
-            add_tooltip(genTooltip,"hover") %>%
-            add_legend("stroke",title = "Hatte Corona Erfahrung in soz. Umkreis", values = c("Ja","Nein")) %>%
-            scale_nominal("stroke", domain =  c("Ja","Nein"), range = c("orange","lightblue")) %>%
-            set_options(width = 800, height =  600)
-            
+# sprache obs -------------------------------------------------------------
+
+    observeEvent(input$selected_language, {
+      # This print is just for demonstration
+      print(paste("Language change!", input$selected_language))
+      # Here is where we update language in session
+      shiny.i18n::update_lang(session, input$selected_language)
     })
     
-    vis %>% bind_shiny("plot1")
-    output$N <- renderText({ nrow((dfs())) })
+   #  # i18n <- reactive({
+   #  #   selected <- input$selected_language
+   #  #   if (length(selected) > 0 && selected %in% translator$get_languages()) {
+   #  #     translator$set_translation_language(selected)
+   #  #   }
+   #  #   translator
+   #  # })
+   #  # 
+   #  #leaflet Data prep
+   #  #install.packages("geojsonio")
+   #  
+   #  #install.packages("leaflet")
+   #  library(leaflet)
+   #  states <- geojsonio::geojson_read("luxembourg.geojson", what = "sp")
+   #  class(states)
+   #  states$density <- rnorm(12,50,20)
+   #  # Daten agreggieren
+   #  
+   #  # Reactive expression for the data subsetted to what the user selected
+   #  
+   #  #agg <- reactive({aggregate(dfs,by = list(dfs$region),FUN = mean,na.rm=TRUE)})
+   #  agg <-  reactive({aggregate(dfs(),by = list(dfs()$region),FUN = mean,na.rm=TRUE) })
+   #  aggs <- reactive({states})
+   #  #aggs$einkommen <- reactive({agg$})
+   #  #states$einkommen <- agg$einkommen
+   # 
+   # 
+   # 
+   #  bins <- c(0, 30, 40, 50, 60 ,70, Inf)
+   #  pal <- colorBin("YlOrRd", domain = states$density, bins = bins)
+   #  
+   #  labels <- sprintf(
+   #    "<strong>%s</strong><br/>%g people / mi<sup>2</sup>",
+   #    states$name, states$density
+   #  ) %>% lapply(htmltools::HTML)
+   #  
+   # 
+   #  output$mymap <- renderLeaflet({
+   #    leaflet(aggs(),options = leafletOptions(zoomControl = FALSE,minZoom = 8.7, maxZoom = 8.7,dragging = FALSE)) %>%
+   #      addProviderTiles("MapBox", options = providerTileOptions(
+   #        id = "mapbox.light",
+   #        accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) %>% 
+   #      addPolygons(
+   #    fillColor = pal(aggs()$density),
+   #    weight = 2,
+   #    opacity = 1,
+   #    color = "white",
+   #    dashArray = "3",
+   #    fillOpacity = 0.7,
+   #    highlight = highlightOptions(
+   #      weight = 5,
+   #      color = "#666",
+   #      dashArray = "",
+   #      fillOpacity = 0.7,
+   #      bringToFront = TRUE),
+   #    label = labels,
+   #    labelOptions = labelOptions(
+   #      style = list("font-weight" = "normal", padding = "3px 8px"),
+   #      textsize = "15px",
+   #      direction = "auto")) %>%
+   #    addLegend(pal = pal, values = ~density, opacity = 0.7, title = NULL,
+   #              position = "bottomright")
+   #  
+   #  })
+   #  
+   #  #proxy fuer interaktiionsaenderungen
+   #  observe({
+   #    #pal <- colorpal()  brauche ich noch nicht
+   #    
+   #    leafletProxy("mymap", data = agg) 
+   #  })
+   #  
+   #  
+   #  #toggle between ggvis and highchartR
+   # # whichplot <- reactiveVal(TRUE)  #start of as True 
+   #  
+   #  
+   #  # A reactive expression with the ggvis plot
+   #  vis <- reactive({
+   #      #lables for axes 
+   #      # xvar_name <- names(axis_vars)[axis_vars == input$xvar]
+   #      # yvar_name <- names(axis_vars)[axis_vars == input$yvar]
+   #      
+   #      # Normally we could do something like props(x = ~BoxOffice, y = ~Reviews),
+   #      # but since the inputs are strings, we need to do a little more work.
+   #        xvar <- prop("x", as.symbol(input$xvar))
+   #        yvar <- prop("y", as.symbol(input$yvar))
+   #      # xvar <- 1
+   #      # yvar <- d$Zufriedenheit
+   #      # 
+   #      dfs %>% 
+   #          ggvis(x = xvar, y = yvar) %>% 
+   #          layer_points(size := 50, size.hover := 200, fillOpacity := 0.2, fillOpacity.hover := 0.5, stroke = ~covid, key := ~id) %>%
+   #          add_tooltip(genTooltip,"hover") %>%
+   #          add_legend("stroke",title = "Hatte Corona Erfahrung in soz. Umkreis", values = c("Ja","Nein")) %>%
+   #          scale_nominal("stroke", domain =  c("Ja","Nein"), range = c("orange","lightblue")) %>%
+   #          set_options(width = 800, height =  600)
+   #          
+   #  })
+   #  
+   #  vis %>% bind_shiny("plot1")
+   #  output$N <- renderText({ nrow((dfs())) })
+   #  
+    
     
     #boxplot + highchart
     dat <- data_to_boxplot(df, Zufriedenheit, sex,name = "Unterschiede in Zufriedenheit") #fuer highcharter box
@@ -207,7 +309,249 @@ server <- function(input, output) {
     output$chart2 <- renderHighchart ({
                   highchart() %>% hc_xAxis(type = "category") %>% hc_add_series_list(dat) 
     })
-}
+    
+
+# Tab2 Vis ----------------------------------------------------------------
+   output$hcchart1 <- renderHighchart({
+    #switch proxy für charttype
+
+    if (input$switch == T)
+      {switch <-"column"
+    } else { switch <- "bar"
+    }  
+     
+     colors <- c("#e41618","#52bde7","#4d4d52","#90b36d","#f5951f","#6f4b89","#3fb54e","#eea4d8")
+     ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.name);}")
+     
+    hc <-   highchart(height = "80%") %>%
+       hc_yAxis(title = list(text = "%")) %>%
+      hc_chart(type = switch)%>%
+      hc_colors(colors) %>% 
+      hc_subtitle(text = "Luxembourg, 2019") %>%
+       hc_plotOptions(series = list(#column = list(stacking = "normal"), 
+        borderWidth=0,
+        dataLabels = list(enabled = TRUE),
+        events = list(click = ClickFunction)))%>%
+       hc_tooltip(headerFormat = '<span style="font-size:10px">{point.key}</span><table>', pointFormat = '<tr><td style="color:{series.color};padding:0">{series.name}: </td><td style="padding:0"><b>{point.y:.1f} %</b></td></tr>', footerFormat = '</table>', shared = T, useHTML =T) %>%
+       hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu",text = "Download" )), filename = "custom-file-name_Luxembourg_Data") 
+      #hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu",text = "Download", menuItems = "null", onclick = JS("function () { this.renderer.label('efwfe',100,100).attr({fill:'#a4edba',r:5,padding: 10, zIndex: 10}) .css({ fontSize: '1.5em'}) .add();}") )), filename = "custom-file-name_Luxembourg_Data") 
+      #switch <- switch(input$switch, TRUEE = "column", "FALSE" = "column", "column")
+
+     if (input$test == "None" & input$thema == "Identität") {
+       dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
+       
+       hc %>% 
+         hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity.")%>%
+         hc_xAxis(categories = dfn$name) %>% 
+         hc_add_series(name= " ", data =dfn[c("name","y")] )
+
+     }
+    
+     else if (input$test == "Migration" & input$thema == "Identität") {
+     
+      dfx <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,35,90,82,82), y1 = c (51,24,82,81,81),y2= c(37,36,76,80,82) )
+  
+      hc %>% 
+      hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by migration.")%>%
+      hc_xAxis(categories = dfx$name) %>% 
+      hc_add_series(name= i18n$t("No migration background"), data =dfx[c("name","y")] )%>%
+      hc_add_series(name= "Parents imigrated",data =dfx$y1 ) %>%
+      hc_add_series(name= "Self-Immigrated", data =dfx$y2) 
+     
+    }
+    else if (input$test == "Alter" & input$thema == "Identität") {
+      df2 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(50,30,80,76,75), y1 = c (48,26,81,80,81),y2= c(48,30,79,82,82) )
+
+          hc %>%
+            hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by  age.")%>%
+          #hc_plotOptions(bar = list(stacking = "percent")) %>%
+          hc_xAxis(categories = df2$name) %>%
+          hc_add_series(name= "16-20", data =df2$y )%>%
+          hc_add_series(name= "21-25",data =df2$y1 ) %>%
+          hc_add_series(name= "26-29", data =df2$y2)
+    }
+   
+    else if (input$test == "Geschlecht" & input$thema == "Identität") {
+
+      
+      
+    df3 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(48,27,82,82,81), y1 = c(47,27,79,78,79))
+      hc %>% 
+        hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by living gender.")%>%
+        
+      #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+      hc_xAxis(categories = df3$name) %>% 
+      hc_add_series(name= "Female", data =df3$y )%>%
+      hc_add_series(name= "Male",data =df3$y1 )
+    }
+    else if (input$test == "Status" & input$thema == "Identität") {
+      
+      
+      
+      df4 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(47,26,92,92,85), y1 = c (48,34,89,93,94), y2 = c (49,42,84,76,75))
+      hc %>% 
+        hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by living status.")%>%
+        
+        #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+        hc_xAxis(categories = df4$name) %>% 
+        hc_add_series(name= "Students", data =df4$y )%>%
+        hc_add_series(name= "Employed",data =df4$y1 ) %>%
+        hc_add_series(name= "NEET",data =df4$y2 )
+        
+    }
+    
+    
+    else if (input$test == "None" & input$thema == "Politisches Interesse") {
+      
+      df5 <- tibble(name = c("Extremely","Very","Medium","Not Very","Not at all"),y = c(5,15,39,27,14))
+      hc %>% 
+        hc_title(text = "How young individuals are interested in politics.")%>%
+        #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+        hc_xAxis(categories = df5$name) %>% 
+        hc_add_series(name= " ", data =df5$y )
+
+      
+    }
+    
+    
+    else if (input$test == "Migration" & input$thema == "Politisches Interesse") {
+      
+      df6 <- tibble(name = c("Very Interested","Moderately Interested","Not interested"),y = c(22,39,39), y1 = c(13,40,44), y2 = c(20,35,55))
+      hc %>% 
+        hc_title(text = "How young individuals are interested in politics by migration background.")%>%
+        #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+        hc_xAxis(categories = df6$name) %>% 
+        hc_add_series(name= "No Migration Background", data =df6$y )%>%
+        hc_add_series(name= "Parents Immigrated",data =df6$y1 ) %>%
+        hc_add_series(name= "Self Immigrated",data =df6$y2 )
+      
+      
+    }
+    else if (input$test == "Alter" & input$thema == "Politisches Interesse") {
+      
+      df6 <- tibble(name = c("Very Interested","Moderately Interested","Not interested"),y = c(15,37,49), y1 = c(21,38,41), y2 = c(22,39,40))
+      hc %>% 
+        hc_title(text = "How young individuals are interested in politics by age.")%>%
+        #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+        hc_xAxis(categories = df6$name) %>% 
+        hc_add_series(name= "16-20 y.o.", data =df6$y )%>%
+        hc_add_series(name= "21-25 y.o.",data =df6$y1 ) %>%
+        hc_add_series(name= "26-29 y.o.",data =df6$y2 )
+      
+      
+    }
+    else if (input$test == "Geschlecht" & input$thema == "Politisches Interesse") {
+      
+      df7 <- tibble(name = c("Very Interested","Moderately Interested","Not interested"),y = c(12,49,49), y1 = c(25,48,39))
+      hc %>% 
+        hc_title(text = "How young individuals are interested in politics by gender.")%>%
+        #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+        hc_xAxis(categories = df7$name) %>% 
+        hc_add_series(name= "Female", data =df7$y )%>%
+        hc_add_series(name= "Male",data =df7$y1 )
+      
+      
+    }
+    else if (input$test == "Status" & input$thema == "Politisches Interesse") {
+      
+      df8 <- tibble(name = c("Very Interested","Moderately Interested","Not interested"),y = c(19,40,41), y1 = c(21,37,42), y2 = c(15,38,47))
+      hc %>% 
+        hc_title(text = "How young individuals are interested in politics by living status.")%>%
+        #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+        hc_xAxis(categories = df8$name) %>% 
+        hc_add_series(name= "Students", data =df8$y )%>%
+        hc_add_series(name= "Employed",data =df8$y1 )%>%
+        hc_add_series(name= "NEET",data =df8$y2 )
+    }
+    
+    else if (input$test == "None" & input$thema == "Politische Aktion") {
+      
+      df9 <- tibble(name = c("Taking part in public discussion","Getting involved in citizens initiative","Getting involved in a political party","Taking part in unauthorised demonstration", "Taking part in authorised demonstration", "Taking part in a signature collection campaign", "Boycotting or purchasing goods for political reasons", "Taking part in an online protest", "Posting or sharing something about politics online"),y = c(24,23,23,24,31,33,37,32,33))
+      hc %>% 
+        hc_title(text = "Political actions done before.")%>%
+        #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+        hc_xAxis(categories = df9$name) %>% 
+        hc_add_series(name= "", data =df9$y )
+    }
+    
+    else if (input$test == "Migration" & input$thema == "Politische Aktion") {
+      
+      df10 <- tibble(name = c("Taking part in public discussion","Getting involved in citizens initiative","Getting involved in a political party","Taking part in unauthorised demonstration", "Taking part in authorised demonstration", "Taking part in a signature collection campaign", "Boycotting or purchasing goods for political reasons", "Taking part in an online protest", "Posting or sharing something about politics online"),y = c(25,18,32,31,28,31,39,34,37), y1 = c(24,23,19,20,35,33,40,33,36), y2 = c(19,21,10,11,30,31,31,30,31)) #, y3 = c(24), y4 = c(33), y5 = c(37), y6 = c(33), y7 = c(32), y8 = c(33))
+      hc %>% 
+        hc_title(text = "Political actions done before by migration background.")%>%
+        #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+        hc_xAxis(categories = df10$name) %>% 
+        hc_add_series(name= "No migration background", data =df10$y )%>%
+        hc_add_series(name= "Parents Immigrated", data =df10$y1 )%>%
+        hc_add_series(name= "Self Immigrated", data =df10$y2 )
+      
+    }
+    
+    })
+
+
+# observe -----------------------------------------------------------------
+
+    
+    observeEvent(input$mybutton, output$hcchart1 <- renderHighchart({
+      
+     # ClickFunction <- JS("function(event){Shiny.onInputChange('canvasClicked', [this.name, event.point.category]);}")
+      ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.category);}")
+      
+      df3 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(5,3,4,3,2), y1 = c (4,4,2,4,3))
+      highchart() %>% 
+        hc_chart(type = "bar")%>%
+        #hc_plotOptions(bar = list(stacking = "percent")) %>% 
+        hc_plotOptions(series = list(#column = list(stacking = "normal"), 
+          borderWidth=0,
+          dataLabels = list(enabled = TRUE),
+          events = list(click = ClickFunction)))%>% 
+        hc_xAxis(categories = df3$name) %>% 
+        hc_add_series(name= "Female", data =df3[c("name","y")] )%>%
+        hc_add_series(name= "Male",data =df3$y1 )})
+    )
+    #map render observe event
+    observeEvent(input$Clicked, 
+      if (req(input$Clicked == "Having Lux. Ancestors")) {
+        
+      output$hcchart2 <-  renderHighchart({
+          hcmap(map= "countries/lu/lu-all", data =data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"), value = c(10,30,90)), value = "value", joinBy = "name") 
+          })
+      }else {NULL}
+      
+    )
+    JS("setInterval(function(){ $('#reactiveButton').click(); }, 1000*4);")
+    
+    makeReactiveBinding("outputText")
+
+    observeEvent(input$Clicked, {
+      print(paste0(input$Clicked))
+      outputText <<- paste0(input$Clicked)
+    })
+    observeEvent(input$switch, {
+      switch <- switch(input$switch, "bar", "column")
+      print(paste0(switch))
+      
+      print(paste0(input$switch))
+      })
+
+    output$text <- renderText({
+      outputText
+    })
+    
+    # Observe for third theme update
+    observeEvent(input$thema, {
+      if (input$thema == "Politische Aktion") {
+      updateRadioGroupButtons(session,"test",size = "xs",choices = c("None","Migration"))
+      } 
+      else {
+      updateRadioGroupButtons(session,"test",size = "xs",choices = c("None","Migration", "Alter", "Geschlecht","Status"))
+        
+      }
+      
+    })
+
+} #/server function 
     
     #output$n_movies <- renderText({ nrow(movies()) })
     

@@ -1,0 +1,25 @@
+{
+    "languages": ["en", "de"],
+    "translation": [
+        {
+            "en": "1st draft",
+            "de": "1. Entwurf"
+        },
+        {
+            "en": "2nd draft",
+            "de": "2. Entwurf"
+        },
+	{
+            "en": "Change language",
+            "de": "Sprache wechseln"
+        },
+	{
+            "en": "Sociodemographic",
+            "de": "Soziodemographie"
+	},
+        {   
+	    "en": "No migration background",
+	    "de": "Kein Migrationshintergrund"
+	}
+    ]
+}

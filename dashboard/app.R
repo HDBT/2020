@@ -13,6 +13,7 @@ library(shiny)
 library(shinydashboard)
 require(shiny)
 require(highcharter)
+
 #layout of the dashboard
 #defining character vectors for select inputs
 country<-c("India","United States","Mexico","Canada","China, People's Republic of","Japan","Russian Federation","Germany","United Kingdom","European Union",
@@ -207,3 +208,5 @@ server <- function(input, output) {
 }
 # Run the application 
 shinyApp(ui = ui, server = server)
+
+

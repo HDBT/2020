@@ -108,15 +108,5 @@ axis_vars <- c(
   #library(labelled)
   #data1 <- remove_labels(data)
   
-# get plot type
-# * 2: both numeric variables
-# * 1: one numeric, one non-numeric variable
-# * 0: both non-numeric variables
-# * -1: only one variable provided
-plot_type <- reactive({
-  if (input$y != "None")
-    is.numeric(raw_df[[input$x]]) + is.numeric(raw_df[[input$y]])
-  else
-    -1
-})
-#https://github.com/kjytay/misc/blob/master/blog/2020-12-22%20dataset%20explorer/DatasetExplorer1/app.R
+  
+  
