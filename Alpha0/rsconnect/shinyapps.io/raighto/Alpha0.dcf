@@ -5,9 +5,9 @@ account: raighto
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3091143
-bundleId: 4065025
+bundleId: 4092165
 url: https://raighto.shinyapps.io/Alpha0/
-when: 1609950011.88074
+when: 1610565370.6725
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: www/bootstrap.css|www/loader.gif

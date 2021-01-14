@@ -15,6 +15,8 @@ library(shinyWidgets)
 library(ggvis)
 library(highcharter)
 library(shinyjs)
+library(shinyhelper)
+library(shinyBS)
 #install.packages("shiny.i18n")
 #install.packages("fusionchartsR")
 #require(fusionchartsR)
@@ -57,8 +59,11 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                       radioGroupButtons("thema",i18n$t("Thema"), choiceNames = c("Identität","Politisches Interesse","Politische Aktion"),choiceValues = c("Identität","Politisches Interesse","Politische Aktion"), size = "sm",direction = "horizontal"),
                                       fluidRow(
                                          column(1,
-                                                radioGroupButtons("test",i18n$t("Sociodemographic"), choices = c("None","Migration", "Alter", "Geschlecht","Status"),size = "xs",direction = "vertical", selected = "None"),
-                                         ),       
+                                                radioGroupButtons("test",i18n$t("Sociodemographic"), choices = c("<i class='fa fa-bar-chart'></i>" = "None","Migration", "Alter", "Geschlecht","Status"),size = "xs",direction = "vertical", selected = "None")
+                                                ,
+                                                highchartOutput("hcchart2")),
+                                        
+                                         bsTooltip("test", "Weiterführende Infos","right", options = list(container = "body")),
                                          column(11,
                                                 highchartOutput("hcchart1"),
                                                 
@@ -75,8 +80,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                                      choices = i18n$get_languages(),
                                                      selected = i18n$get_key_translation()
                                                    )
-                                                 )#,
-                                               #  highchartOutput("hcchart2")
+                                                 )
                                         )      
                                  
                                        ),
@@ -322,8 +326,8 @@ server <- function(input, output,session) {
      
      colors <- c("#e41618","#52bde7","#4d4d52","#90b36d","#f5951f","#6f4b89","#3fb54e","#eea4d8")
      ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.name);}")
-     
-    hc <-   highchart(height = "80%") %>%
+     addPopover(session, "hcchart1", "Infos", content = paste0("weiterführende Infos"), trigger = "click")
+    hc <-   highchart() %>%
        hc_yAxis(title = list(text = "%")) %>%
       hc_chart(type = switch)%>%
       hc_colors(colors) %>% 
@@ -333,10 +337,10 @@ server <- function(input, output,session) {
         dataLabels = list(enabled = TRUE),
         events = list(click = ClickFunction)))%>%
        hc_tooltip(headerFormat = '<span style="font-size:10px">{point.key}</span><table>', pointFormat = '<tr><td style="color:{series.color};padding:0">{series.name}: </td><td style="padding:0"><b>{point.y:.1f} %</b></td></tr>', footerFormat = '</table>', shared = T, useHTML =T) %>%
-       hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu",text = "Download" )), filename = "custom-file-name_Luxembourg_Data") 
+       hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu"  )), filename = "custom-file-name_Luxembourg_Data") 
       #hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu",text = "Download", menuItems = "null", onclick = JS("function () { this.renderer.label('efwfe',100,100).attr({fill:'#a4edba',r:5,padding: 10, zIndex: 10}) .css({ fontSize: '1.5em'}) .add();}") )), filename = "custom-file-name_Luxembourg_Data") 
       #switch <- switch(input$switch, TRUEE = "column", "FALSE" = "column", "column")
-
+    
      if (input$test == "None" & input$thema == "Identität") {
        dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
        
@@ -500,15 +504,10 @@ server <- function(input, output,session) {
       
       df3 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(5,3,4,3,2), y1 = c (4,4,2,4,3))
       highchart() %>% 
-        hc_chart(type = "bar")%>%
+        hc_chart(type = "sunburst")%>%
         #hc_plotOptions(bar = list(stacking = "percent")) %>% 
-        hc_plotOptions(series = list(#column = list(stacking = "normal"), 
-          borderWidth=0,
-          dataLabels = list(enabled = TRUE),
-          events = list(click = ClickFunction)))%>% 
-        hc_xAxis(categories = df3$name) %>% 
-        hc_add_series(name= "Female", data =df3[c("name","y")] )%>%
-        hc_add_series(name= "Male",data =df3$y1 )})
+        hc_add_series(name= "Female",cursor= "pointer" ,data =tibble (id = c("0.0","1.3"), parent = c("", "0.0"), name = c("tt", "feof" )))        
+      })
     )
     #map render observe event
     observeEvent(input$Clicked, 
@@ -521,6 +520,7 @@ server <- function(input, output,session) {
       
     )
     JS("setInterval(function(){ $('#reactiveButton').click(); }, 1000*4);")
+    
     
     makeReactiveBinding("outputText")
 

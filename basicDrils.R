@@ -97,3 +97,32 @@ highchart() %>%
   hc_tooltip(shared = T,pointFormat = '<span style="color:{series.color}">{series.name}: <b>%{point.y:,.0f}</b><br/>') %>%
   hc_exporting(enabled = T, filename = "custom-file-name")
   
+
+#calc pi aprox with random x ~ U(0,1)
+
+
+calcf <- function(n){
+x <- 0
+y <- 0
+plot(x,y)
+smaller <- 0
+bigger  <- 0 
+
+  for (i in 1:n) {
+    x <-  runif(1)
+    y <-  runif(1)
+    result <- sqrt(x**2+y**2)
+    ifelse(result <=1, smaller <- smaller +1, bigger <- bigger +1)
+    # if (result <= 1) {
+    #   points(x,y, col ="blue")
+    # } else{
+    #   points(x,y,col="red")
+    # }
+     if (i == n) {
+      
+      print(4*smaller/(smaller+bigger))
+    }
+  }
+}
+calcf(n =1000000)
+
