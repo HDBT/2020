@@ -32,6 +32,28 @@ actionLink <- function(inputId, ...) {
            class='action-button',
            ...)
 }
+CSS <- "
+@media (max-width: 1000px) { 
+  .bootstrap-select > .dropdown-toggle[title='Choose ...'],
+  .bootstrap-select > .dropdown-toggle[title='Choose ...']:hover,
+  .bootstrap-select > .dropdown-toggle[title='Choose ...']:focus,
+  .bootstrap-select > .dropdown-toggle[title='Choose ...']:active,
+  .pClass {
+    font-size: 12; 
+    color: green;
+  }
+}
+@media (min-width: 1001px) { 
+  .bootstrap-select > .dropdown-toggle[title='Choose ...'],
+  .bootstrap-select > .dropdown-toggle[title='Choose ...']:hover,
+  .bootstrap-select > .dropdown-toggle[title='Choose ...']:focus,
+  .bootstrap-select > .dropdown-toggle[title='Choose ...']:active,
+  .pClass {
+    font-size: 18; 
+    color: blue;
+  }
+}"
+
 # sprache -----------------------------------------------------------------
 library(shiny.i18n) #dev version wegen google probs
 
@@ -41,45 +63,51 @@ i18n$set_translation_language('de')
 
 # UI
 ui <- fluidPage(#theme = "bootstrap.css",
-
-  #tags$head(
-    #tags$style(HTML(".leaflet-container { background: #FFFFFF; }"))
-  #),
-  
-            
-              fluidRow(shiny.i18n::usei18n(i18n),
-            
-                        column(12, 
+  useShinyjs(),
+  tags$script(src = "js.js"),
+  tags$head(tags$style(HTML('* {font-family: "Helvetica" !important};'))), # * um jedes Element zu selektieren. !important um  optionen in den Kasaden zu überschreiben
+  tags$head(tags$style(HTML(".shiny-input-container { font-size: 18px; }"))), #funzt
+  tags$head(tags$style(HTML(".highcharts-input-container { font-size: 60px; }"))), #funzt nicht
+              fluidRow(id ="first",shiny.i18n::usei18n(i18n),
+                       
+                        column(12,                    
                                flipBoxN(front_btn_text = "Meta-Information",
                                       id = 1,
                                       main_img = NULL,
                                       header_img = NULL  ,
                                       back_content  = "The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg.  
                                       ",
-                                      radioGroupButtons("thema",i18n$t("Thema"), choiceNames = c("Identität","Politisches Interesse","Politische Aktion"),choiceValues = c("Identität","Politisches Interesse","Politische Aktion"), size = "sm",direction = "horizontal"),
+                                      radioGroupButtons("thema",i18n$t("Thema"), choiceNames = c("Identität","Politisches Interesse","Politische Aktion"),choiceValues = c("Identität","Politisches Interesse","Politische Aktion"), size = "normal",direction = "horizontal"),
                                       fluidRow(
-                                         column(1,
-                                                radioGroupButtons("test",i18n$t("Sociodemographic"), choices = c("<i class='fa fa-bar-chart'></i>" = "None","Migration", "Alter", "Geschlecht","Status"),size = "xs",direction = "vertical", selected = "None")
-                                                ,
-                                                highchartOutput("hcchart2")),
+                                         column(2,
+                                                fluidRow(
+                                                   column(1),
+                                                   column(11,
+                                                          br(),
+                                                    radioGroupButtons("test",i18n$t("Sociodemographic"), choices = c("<i class='fa fa-bar-chart'></i>" = "None","Migration", "Alter", "Geschlecht","Status"),size = "normal",direction = "vertical", selected = "None")
+                                                    ,highchartOutput("hcchart2")
+                                                   ) 
+                                                )    
+                                         ),
                                         
                                          bsTooltip("test", "Weiterführende Infos","right", options = list(container = "body")),
-                                         column(11,
-                                                highchartOutput("hcchart1"),
+                                         column(10,
+                                                div(highchartOutput("hcchart1"), style = "font-size:15%"),
                                                 
-                                                
-                                     
+                                           
                                
                                                  #actionButton("mybutton", "action"),
-                                                 prettySwitch(inputId = "switch","Spaltendiagramm",slim = T, value = TRUE),
-                                                 tags$div(
-                                                   style='float: right;width: 100px',
+                                                tags$style(HTML("#lang_div .shiny-input-container  {font-size: 16px;}")),  #individuelles style setzen indem man eine eigens erstellte id anspricht
+                                                 div(id ="lang_div",prettySwitch(inputId = "switch","Spaltendiagramm",slim = T, value = TRUE),#div() um eigene ID zu setzen fürs ansprechen (individuelle style tags z.b.)
+                                                 tags$div(  
+                                                   style='float: right;width: 70px;',
                                                    selectInput(
                                                      inputId='selected_language',
                                                      label=i18n$t('Change language'),
                                                      choices = i18n$get_languages(),
                                                      selected = i18n$get_key_translation()
                                                    )
+                                                 )
                                                  )
                                         )      
                                  
@@ -89,37 +117,18 @@ ui <- fluidPage(#theme = "bootstrap.css",
                        )
              ) 
   
-      
 
-    # Sidebar with a slider input for number of bins 
-#     sidebarLayout(
-#         sidebarPanel(
-#             sliderInput("bins",
-#                         "Number of bins:",
-#                         min = 1,
-#                         max = 50,
-#                         value = 30)
-#         ),
-# 
-#         # Show a plot of the generated distribution
-#         mainPanel(
-#            plotOutput("distPlot")
-#         )
-#     )
-# )
-#
-
-# Define server logic required to draw a histogram
 library(ggvis) 
 library(plyr)
 #library(shinyjs)
 library(dplyr)
 library(data.table)
 library(highcharter)
-source("global.r")
 #write.csv(df,"df.csv")
 options(shiny.reactlog = T)
 server <- function(input, output,session) {
+  source("global.r")
+  
     # 
     # # filter the obs, returning a subset dataframe
     # dfs <- reactive({ 
@@ -279,41 +288,41 @@ server <- function(input, output,session) {
    #  vis %>% bind_shiny("plot1")
    #  output$N <- renderText({ nrow((dfs())) })
    #  
-    
-    
-    #boxplot + highchart
-    dat <- data_to_boxplot(df, Zufriedenheit, sex,name = "Unterschiede in Zufriedenheit") #fuer highcharter box
-    output$hcontainer <- renderHighchart ({
-        
-        #write all R-code inside this
-        
-        # df  <- inf %>% filter(region==input$country) #making the dataframe of the country
-        # #above input$country is used to extract the select input value from the UI and then make 
-        # #a dataframe based on the selected input
-        # df$inflation <- as.numeric(df$inflation)
-        # df$year <- as.numeric(df$year)
-        
-        #plotting the data
-      hchart(df%>% filter(sex == 0), type = "point", hcaes(x = Zufriedenheit, y = einkommen), name = "Männer") %>%
-        hc_add_series(df %>% filter(sex == 1), type = "point", mapping = hcaes(x = Zufriedenheit, y = einkommen), name = "Frauen", fast = FALSE) 
-      
-       #highchart() %>%hc_xAxis(type = "category") %>%hc_add_series_list(dat) 
-       ## Not run:## End(Not run)data_to_hierarchicalHelper to transform data frame for treemap/sunburst highcharts for-matDescriptionHelper to transform data frame for treemap/sunburst highcharts format
-       #  hchart(df%>% filter(sex == 0), type = "point", hcaes(x = Zufriedenheit, y = einkommen), name = "Männer") %>%
-        #     hc_add_series(df %>% filter(sex == 1), type = "point", mapping = hcaes(x = Zufriedenheit, y = einkommen), name = "Frauen", fast = FALSE)
-        #) 
-            # hc_exporting(enabled = TRUE) %>% 
-            # hc_tooltip(crosshairs = TRUE, backgroundColor = "#FCFFC5",
-            #            shared = TRUE, borderWidth = 2) %>%
-            # hc_title(text="Time series plot of Inflation Rates",align="center") %>%
-            # hc_subtitle(text="Data Source: IMF",align="center") %>%
-            # hc_add_theme(hc_theme_elementary()) 
-        
-    }) # end hcontainer
-    output$chart2 <- renderHighchart ({
-                  highchart() %>% hc_xAxis(type = "category") %>% hc_add_series_list(dat) 
-    })
-    
+    # 
+    # 
+    # #boxplot + highchart
+    # dat <- data_to_boxplot(df, Zufriedenheit, sex,name = "Unterschiede in Zufriedenheit") #fuer highcharter box
+    # output$hcontainer <- renderHighchart ({
+    #     
+    #     #write all R-code inside this
+    #     
+    #     # df  <- inf %>% filter(region==input$country) #making the dataframe of the country
+    #     # #above input$country is used to extract the select input value from the UI and then make 
+    #     # #a dataframe based on the selected input
+    #     # df$inflation <- as.numeric(df$inflation)
+    #     # df$year <- as.numeric(df$year)
+    #     
+    #     #plotting the data
+    #   hchart(df%>% filter(sex == 0), type = "point", hcaes(x = Zufriedenheit, y = einkommen), name = "Männer") %>%
+    #     hc_add_series(df %>% filter(sex == 1), type = "point", mapping = hcaes(x = Zufriedenheit, y = einkommen), name = "Frauen", fast = FALSE) 
+    #   
+    #    #highchart() %>%hc_xAxis(type = "category") %>%hc_add_series_list(dat) 
+    #    ## Not run:## End(Not run)data_to_hierarchicalHelper to transform data frame for treemap/sunburst highcharts for-matDescriptionHelper to transform data frame for treemap/sunburst highcharts format
+    #    #  hchart(df%>% filter(sex == 0), type = "point", hcaes(x = Zufriedenheit, y = einkommen), name = "Männer") %>%
+    #     #     hc_add_series(df %>% filter(sex == 1), type = "point", mapping = hcaes(x = Zufriedenheit, y = einkommen), name = "Frauen", fast = FALSE)
+    #     #) 
+    #         # hc_exporting(enabled = TRUE) %>% 
+    #         # hc_tooltip(crosshairs = TRUE, backgroundColor = "#FCFFC5",
+    #         #            shared = TRUE, borderWidth = 2) %>%
+    #         # hc_title(text="Time series plot of Inflation Rates",align="center") %>%
+    #         # hc_subtitle(text="Data Source: IMF",align="center") %>%
+    #         # hc_add_theme(hc_theme_elementary()) 
+    #     
+    # }) # end hcontainer
+    # output$chart2 <- renderHighchart ({
+    #               highchart() %>% hc_xAxis(type = "category") %>% hc_add_series_list(dat) 
+    # })
+    # 
 
 # Tab2 Vis ----------------------------------------------------------------
    output$hcchart1 <- renderHighchart({
@@ -323,37 +332,43 @@ server <- function(input, output,session) {
       {switch <-"column"
     } else { switch <- "bar"
     }  
+     dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
+     dfx <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,35,90,82,82), y1 = c (51,24,82,81,81),y2= c(37,36,76,80,82) )
+     df_l  <- lst(dfn, dfx)
+     l2<-lapply(df_l, function(df) 
+       cbind(df, b = df$y *1.1, c = df$y *1.2, d = df$y *0.7))
      
      colors <- c("#e41618","#52bde7","#4d4d52","#90b36d","#f5951f","#6f4b89","#3fb54e","#eea4d8")
-     ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.name);}")
+     ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.index);}")
      addPopover(session, "hcchart1", "Infos", content = paste0("weiterführende Infos"), trigger = "click")
     hc <-   highchart() %>%
-       hc_yAxis(title = list(text = "%")) %>%
+      hc_xAxis(labels = list(style = list(fontSize = "16px"))) %>% 
+       hc_yAxis(labels= list(format = "{value} %", style = list(fontSize = "16px"))) %>%
       hc_chart(type = switch)%>%
       hc_colors(colors) %>% 
+      hc_title(style = list(fontSize = "18px")) %>%
       hc_subtitle(text = "Luxembourg, 2019") %>%
        hc_plotOptions(series = list(#column = list(stacking = "normal"), 
         borderWidth=0,
-        dataLabels = list(enabled = TRUE),
+        dataLabels = list(style = list(fontSize = "14px"),enabled = TRUE),
         events = list(click = ClickFunction)))%>%
-       hc_tooltip(headerFormat = '<span style="font-size:10px">{point.key}</span><table>', pointFormat = '<tr><td style="color:{series.color};padding:0">{series.name}: </td><td style="padding:0"><b>{point.y:.1f} %</b></td></tr>', footerFormat = '</table>', shared = T, useHTML =T) %>%
+       hc_tooltip(headerFormat = '<span style="font-size:16px">{point.key}</span><table>', pointFormat = '<tr><td style="color:{series.color};font-size:16px;padding:0">{series.name}: </td><td style="padding:0;font-size:16px;"><b>{point.y:.1f} %</b></td></tr>', footerFormat = '</table>', shared = T, useHTML =T) %>%
        hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu"  )), filename = "custom-file-name_Luxembourg_Data") 
       #hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu",text = "Download", menuItems = "null", onclick = JS("function () { this.renderer.label('efwfe',100,100).attr({fill:'#a4edba',r:5,padding: 10, zIndex: 10}) .css({ fontSize: '1.5em'}) .add();}") )), filename = "custom-file-name_Luxembourg_Data") 
       #switch <- switch(input$switch, TRUEE = "column", "FALSE" = "column", "column")
     
      if (input$test == "None" & input$thema == "Identität") {
-       dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
-       
+       #dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
+
        hc %>% 
          hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity.")%>%
-         hc_xAxis(categories = dfn$name) %>% 
-         hc_add_series(name= " ", data =dfn[c("name","y")] )
+         hc_xAxis(categories = dfn$name ,additonialInfo = 1:4 ) %>% 
+         hc_add_series(name= " ",data =df_l$dfn[c("name","y")] ,showInLegend = F)
 
      }
     
      else if (input$test == "Migration" & input$thema == "Identität") {
      
-      dfx <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,35,90,82,82), y1 = c (51,24,82,81,81),y2= c(37,36,76,80,82) )
   
       hc %>% 
       hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by migration.")%>%
@@ -361,7 +376,6 @@ server <- function(input, output,session) {
       hc_add_series(name= i18n$t("No migration background"), data =dfx[c("name","y")] )%>%
       hc_add_series(name= "Parents imigrated",data =dfx$y1 ) %>%
       hc_add_series(name= "Self-Immigrated", data =dfx$y2) 
-     
     }
     else if (input$test == "Alter" & input$thema == "Identität") {
       df2 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(50,30,80,76,75), y1 = c (48,26,81,80,81),y2= c(48,30,79,82,82) )
@@ -493,7 +507,6 @@ server <- function(input, output,session) {
     
     })
 
-
 # observe -----------------------------------------------------------------
 
     
@@ -511,17 +524,29 @@ server <- function(input, output,session) {
     )
     #map render observe event
     observeEvent(input$Clicked, 
-      if (req(input$Clicked == "Having Lux. Ancestors")) {
-        
+      if (req(input$Clicked == "1")) {
+        click("btn-1-front",F)
       output$hcchart2 <-  renderHighchart({
-          hcmap(map= "countries/lu/lu-all", data =data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"), value = c(10,30,90)), value = "value", joinBy = "name") 
-          })
+        
+        hcmap(map= "countries/lu/lu-all", data =data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"), value =as.vector(unlist(l2[[input$Clicked]][2,3:5]))), value = "value", joinBy = "name") %>%   #unlist oder flatten aus purrr
+          hc_plotOptions(series = list(#column = list(stacking = "normal"), 
+            borderWidth=0,
+            dataLabels = list(style = list(fontSize = "14px"),enabled = TRUE),
+            events = list(click = ClickFunction)))  %>%
+           hc_credits(enabled = F) %>%
+           hc_legend(enabled = F)
+      
+        })
       }else {NULL}
       
     )
+    
+    
+    
     JS("setInterval(function(){ $('#reactiveButton').click(); }, 1000*4);")
     
-    
+ 
+   
     makeReactiveBinding("outputText")
 
     observeEvent(input$Clicked, {
@@ -531,7 +556,6 @@ server <- function(input, output,session) {
     observeEvent(input$switch, {
       switch <- switch(input$switch, "bar", "column")
       print(paste0(switch))
-      
       print(paste0(input$switch))
       })
 
@@ -542,10 +566,10 @@ server <- function(input, output,session) {
     # Observe for third theme update
     observeEvent(input$thema, {
       if (input$thema == "Politische Aktion") {
-      updateRadioGroupButtons(session,"test",size = "xs",choices = c("None","Migration"))
+      updateRadioGroupButtons(session,"test",size = "normal",choices = c("None","Migration"))
       } 
       else {
-      updateRadioGroupButtons(session,"test",size = "xs",choices = c("None","Migration", "Alter", "Geschlecht","Status"))
+      updateRadioGroupButtons(session,"test",size = "normal",choices = c("None","Migration", "Alter", "Geschlecht","Status"))
         
       }
       

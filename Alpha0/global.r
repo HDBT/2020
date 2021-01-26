@@ -45,27 +45,27 @@
 #   
 #   all.equal(x1, finalx[,1])
 
-Zufriedenheit <- as.integer(rnorm(100,5,2))
-sex <- rbinom(100,1,.5)
-einkommen <- as.integer(sample(100,100, T))
-mig <- sample(1:3, 100, replace = T)
-emotion <- sample(c("hoffnung", "angst", "traurig", "wut", "misstrauen"),100,T)
-covid <- sample(c("covid1","covid2"),100, replace = T, prob =c(0.5,.2))
-region <- sample(1:12,100,T)
-id <- 1:100
-df <- data.frame(sex,Zufriedenheit,einkommen,mig,covid,id,emotion,region)
-
-#leaflet agreggate
-# df_agg <- df %>%
-#   group_by(region) %>%
-#   summarize(mean_weight = mean(einkommen, na.rm = TRUE))
-# class(df_agg$mean_weight)
-# Variables that can be put on the x and y axes
-axis_vars <- c(
-  "Einkommen in Brutto" = "einkommen",
-  "Zufriedenheitskala" = "Zufriedenheit"
-
-)
+# Zufriedenheit <- as.integer(rnorm(100,5,2))
+# sex <- rbinom(100,1,.5)
+# einkommen <- as.integer(sample(100,100, T))
+# mig <- sample(1:3, 100, replace = T)
+# emotion <- sample(c("hoffnung", "angst", "traurig", "wut", "misstrauen"),100,T)
+# covid <- sample(c("covid1","covid2"),100, replace = T, prob =c(0.5,.2))
+# region <- sample(1:12,100,T)
+# id <- 1:100
+# df <- data.frame(sex,Zufriedenheit,einkommen,mig,covid,id,emotion,region)
+# 
+# #leaflet agreggate
+# # df_agg <- df %>%
+# #   group_by(region) %>%
+# #   summarize(mean_weight = mean(einkommen, na.rm = TRUE))
+# # class(df_agg$mean_weight)
+# # Variables that can be put on the x and y axes
+# axis_vars <- c(
+#   "Einkommen in Brutto" = "einkommen",
+#   "Zufriedenheitskala" = "Zufriedenheit"
+# 
+# )
 
 #data 
 
@@ -108,15 +108,27 @@ axis_vars <- c(
   #library(labelled)
   #data1 <- remove_labels(data)
   
+
+
+# plot type reactive function ---------------------------------------------
+
+
 # get plot type
 # * 2: both numeric variables
 # * 1: one numeric, one non-numeric variable
 # * 0: both non-numeric variables
 # * -1: only one variable provided
-plot_type <- reactive({
-  if (input$y != "None")
-    is.numeric(raw_df[[input$x]]) + is.numeric(raw_df[[input$y]])
-  else
-    -1
-})
+# plot_type <- reactive({
+#   if (input$y != "None")
+#     is.numeric(raw_df[[input$x]]) + is.numeric(raw_df[[input$y]])
+#   else
+#     -1
+# })
 #https://github.com/kjytay/misc/blob/master/blog/2020-12-22%20dataset%20explorer/DatasetExplorer1/app.R
+
+
+
+# data  -------------------------------------------------------------------
+
+#dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
+
