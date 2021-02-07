@@ -8,21 +8,36 @@
 #
 #library(geojsonio)
 library(shiny)
-library(leaflet)
+#library(leaflet)
 library(shinydashboard)
 library(shinydashboardPlus)
 library(shinyWidgets)
-library(ggvis)
 library(highcharter)
 library(shinyjs)
 library(shinyhelper)
 library(shinyBS)
+library(dplyr)
 #install.packages("shiny.i18n")
 #install.packages("fusionchartsR")
 #require(fusionchartsR)
 #library(shinycustomloader)
 source("global.r")
 source("flipBox.R")
+source("map.r")
+#library(ggvis) 
+#library(plyr)
+library(shiny.i18n) #dev version wegen google probs
+
+i18n <- Translator$new(translation_csvs_path = "../Alpha0")
+#i18n <- Translator$new(automatic = TRUE)
+i18n$set_translation_language('en')
+
+#library(shinyjs)
+library(dplyr)
+#library(data.table)
+library(highcharter)
+#write.csv(df,"df.csv")
+options(shiny.reactlog = T)
 #options(shiny.error = browser)
 #install.packages("shinycustomloader")
 # For dropdown menu #useless?
@@ -53,39 +68,43 @@ CSS <- "
     color: blue;
   }
 }"
-
+script <- '
+    Shiny.addCustomMessageHandler("jsCode", function(message) { 
+        eval(message.value);
+    });
+    function hello() {
+        console.log("hello from function hello!");
+    };
+'
 # sprache -----------------------------------------------------------------
-library(shiny.i18n) #dev version wegen google probs
-
-i18n <- Translator$new(translation_json_path = "translation.json")
-#i18n <- Translator$new(automatic = TRUE)
-i18n$set_translation_language('de')
 
 # UI
 ui <- fluidPage(#theme = "bootstrap.css",
   useShinyjs(),
-  tags$script(src = "js.js"),
+  tags$head(tags$script(' document.getElementById("Clicked").onclick = function() {
+ Shiny.onInputChange("Clicked", NULL); }; ')),
   tags$head(tags$style(HTML('* {font-family: "Helvetica" !important};'))), # * um jedes Element zu selektieren. !important um  optionen in den Kasaden zu überschreiben
   tags$head(tags$style(HTML(".shiny-input-container { font-size: 18px; }"))), #funzt
   tags$head(tags$style(HTML(".highcharts-input-container { font-size: 60px; }"))), #funzt nicht
               fluidRow(id ="first",shiny.i18n::usei18n(i18n),
+                       extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('.Clicked', 'null'); }", functions = c()),
                        
-                        column(12,                    
+                        column(12,          
                                flipBoxN(front_btn_text = "Meta-Information",
                                       id = 1,
                                       main_img = NULL,
                                       header_img = NULL  ,
-                                      back_content  = "The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg.  
-                                      ",
-                                      radioGroupButtons("thema",i18n$t("Thema"), choiceNames = c("Identität","Politisches Interesse","Politische Aktion"),choiceValues = c("Identität","Politisches Interesse","Politische Aktion"), size = "normal",direction = "horizontal"),
+                                      back_content  = tagList(column(12,highchartOutput("hcchart2"))) #"The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg."
+                                      ,
+                                      radioGroupButtons("thema",i18n$t("Thema"), choiceNames = c("Identitaet","Politisches Interesse","Politische Aktion"),choiceValues = c("Identität","Politisches Interesse","Politische Aktion"), size = "normal",direction = "horizontal"),
                                       fluidRow(
                                          column(2,
                                                 fluidRow(
                                                    column(1),
                                                    column(11,
                                                           br(),
-                                                    radioGroupButtons("test",i18n$t("Sociodemographic"), choices = c("<i class='fa fa-bar-chart'></i>" = "None","Migration", "Alter", "Geschlecht","Status"),size = "normal",direction = "vertical", selected = "None")
-                                                    ,highchartOutput("hcchart2")
+                                                    radioGroupButtons("test",i18n$t("Sociodemographic"), choices = c("None","Migration", "Alter", "Geschlecht","Status"),size = "normal",direction = "vertical", selected = "None")
+                                                    #,highchartOutput("hcchart2")
                                                    ) 
                                                 )    
                                          ),
@@ -118,14 +137,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
              ) 
   
 
-library(ggvis) 
-library(plyr)
-#library(shinyjs)
-library(dplyr)
-library(data.table)
-library(highcharter)
-#write.csv(df,"df.csv")
-options(shiny.reactlog = T)
+
 server <- function(input, output,session) {
   source("global.r")
   
@@ -176,14 +188,7 @@ server <- function(input, output,session) {
     # }
 
 
-# sprache obs -------------------------------------------------------------
 
-    observeEvent(input$selected_language, {
-      # This print is just for demonstration
-      print(paste("Language change!", input$selected_language))
-      # Here is where we update language in session
-      shiny.i18n::update_lang(session, input$selected_language)
-    })
     
    #  # i18n <- reactive({
    #  #   selected <- input$selected_language
@@ -323,23 +328,31 @@ server <- function(input, output,session) {
     #               highchart() %>% hc_xAxis(type = "category") %>% hc_add_series_list(dat) 
     # })
     # 
+    ClickFunction <-  JS("function(event) {var rr = event.point.index; var rr = {rr, '.nonce': Math.random()};Shiny.onInputChange('Clicked',rr);}")
+    #ClickFunction <-  JS("function(event) {Shiny.onInputChange('Clicked',event.point.index);}")
 
 # Tab2 Vis ----------------------------------------------------------------
    output$hcchart1 <- renderHighchart({
     #switch proxy für charttype
 
+     dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
+     dfx <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,35,90,82,82), y1 = c (51,24,82,81,81),y2= c(37,36,76,80,82) )
+     df2 <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(50,30,80,76,75), y1 = c (48,26,81,80,81),y2= c(48,30,79,82,82) )
+     df3 <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(48,27,82,82,81), y1 = c(47,27,79,78,79))
+     df4 <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(47,26,92,92,85), y1 = c (48,34,89,93,94), y2 = c (49,42,84,76,75))
+     
+     df_l  <- lst(dfn,dfx)
+     print(head(df_l))
+     l2<-lapply(df_l, function(df) 
+       cbind(df, b = df$y *1.1, c = df$y *1.2, d = df$y *0.7))
     if (input$switch == T)
       {switch <-"column"
     } else { switch <- "bar"
     }  
-     dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
-     dfx <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,35,90,82,82), y1 = c (51,24,82,81,81),y2= c(37,36,76,80,82) )
-     df_l  <- lst(dfn, dfx)
-     l2<-lapply(df_l, function(df) 
-       cbind(df, b = df$y *1.1, c = df$y *1.2, d = df$y *0.7))
      
      colors <- c("#e41618","#52bde7","#4d4d52","#90b36d","#f5951f","#6f4b89","#3fb54e","#eea4d8")
-     ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.index);}")
+     
+     
      addPopover(session, "hcchart1", "Infos", content = paste0("weiterführende Infos"), trigger = "click")
     hc <-   highchart() %>%
       hc_xAxis(labels = list(style = list(fontSize = "16px"))) %>% 
@@ -357,17 +370,17 @@ server <- function(input, output,session) {
       #hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu",text = "Download", menuItems = "null", onclick = JS("function () { this.renderer.label('efwfe',100,100).attr({fill:'#a4edba',r:5,padding: 10, zIndex: 10}) .css({ fontSize: '1.5em'}) .add();}") )), filename = "custom-file-name_Luxembourg_Data") 
       #switch <- switch(input$switch, TRUEE = "column", "FALSE" = "column", "column")
     
-     if (input$test == "None" & input$thema == "Identität") {
+     if (input$test == i18n$t("None") & input$thema == i18n$t("Identität")) {
        #dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
 
        hc %>% 
          hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity.")%>%
          hc_xAxis(categories = dfn$name ,additonialInfo = 1:4 ) %>% 
-         hc_add_series(name= " ",data =df_l$dfn[c("name","y")] ,showInLegend = F)
+         hc_add_series(name= " ",data =l2$dfn[c("name","y")] ,showInLegend = F)
 
      }
     
-     else if (input$test == "Migration" & input$thema == "Identität") {
+     else if (input$test == "Migration" & input$thema == "Identität") { #vorher MIgration
      
   
       hc %>% 
@@ -378,11 +391,10 @@ server <- function(input, output,session) {
       hc_add_series(name= "Self-Immigrated", data =dfx$y2) 
     }
     else if (input$test == "Alter" & input$thema == "Identität") {
-      df2 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(50,30,80,76,75), y1 = c (48,26,81,80,81),y2= c(48,30,79,82,82) )
 
           hc %>%
             hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by  age.")%>%
-          #hc_plotOptions(bar = list(stacking = "percent")) %>%
+          hc_plotOptions(bar = list(stacking = "percent")) %>%
           hc_xAxis(categories = df2$name) %>%
           hc_add_series(name= "16-20", data =df2$y )%>%
           hc_add_series(name= "21-25",data =df2$y1 ) %>%
@@ -393,7 +405,6 @@ server <- function(input, output,session) {
 
       
       
-    df3 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(48,27,82,82,81), y1 = c(47,27,79,78,79))
       hc %>% 
         hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by living gender.")%>%
         
@@ -406,7 +417,6 @@ server <- function(input, output,session) {
       
       
       
-      df4 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(47,26,92,92,85), y1 = c (48,34,89,93,94), y2 = c (49,42,84,76,75))
       hc %>% 
         hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by living status.")%>%
         
@@ -508,13 +518,12 @@ server <- function(input, output,session) {
     })
 
 # observe -----------------------------------------------------------------
-
-    
-    observeEvent(input$mybutton, output$hcchart1 <- renderHighchart({
+   #ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.category);}") # sollte man global regeln
+   
+    observeEvent(input$mybutton, output$hcchart1 <- renderHighchart({ #experimental
       
      # ClickFunction <- JS("function(event){Shiny.onInputChange('canvasClicked', [this.name, event.point.category]);}")
-      ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.category);}")
-      
+
       df3 <- tibble(name = c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux."),y = c(5,3,4,3,2), y1 = c (4,4,2,4,3))
       highchart() %>% 
         hc_chart(type = "sunburst")%>%
@@ -522,75 +531,139 @@ server <- function(input, output,session) {
         hc_add_series(name= "Female",cursor= "pointer" ,data =tibble (id = c("0.0","1.3"), parent = c("", "0.0"), name = c("tt", "feof" )))        
       })
     )
+    unNonce <- function(f) {
+      x <-  as.integer(input[[f]][1])  #auf doppel [[]] achten, weil single object??? # ist eine Liste; deshalb as.integer
+      print(x)
+      print("^")
+      return(x)
+    } 
+
+    
     #map render observe event
+     worldgeojson<-  convertMap("https://code.highcharts.com/mapdata/countries/lu/lu-all.js")
     observeEvent(input$Clicked, 
-      if (req(input$Clicked == "1")) {
+      if (req(unNonce("Clicked") == "1" | unNonce("Clicked") == "2")) {
+        Clicked <- unNonce("Clicked")
         click("btn-1-front",F)
+        delay(500,
       output$hcchart2 <-  renderHighchart({
-        
-        hcmap(map= "countries/lu/lu-all", data =data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"), value =as.vector(unlist(l2[[input$Clicked]][2,3:5]))), value = "value", joinBy = "name") %>%   #unlist oder flatten aus purrr
+        print(typeof(Clicked))
+        dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
+        dfx <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,35,90,82,82), y1 = c (51,24,82,81,81),y2= c(37,36,76,80,82) )
+        df_l  <- lst(dfn,dfx)
+        print(head(df_l))
+        l2<-lapply(df_l, function(df) 
+          cbind(df, b = df$y *1.1, c = df$y *1.2, d = df$y *0.7))
+        highchart(type = "map") %>% 
+          
+        hc_add_series_map(map =worldgeojson, df= data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"),  value =as.vector(unlist(l2[[Clicked]][2,3:5]))), value = "value", joinBy = "name", name = "test") %>%
+
+         #hcmap(map= "countries/lu/lu-all", data =data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"), value =as.vector(unlist(l2[[input$Clicked]][2,3:5]))), value = "value", joinBy = "name") %>%   #unlist oder flatten aus purrr
           hc_plotOptions(series = list(#column = list(stacking = "normal"), 
             borderWidth=0,
             dataLabels = list(style = list(fontSize = "14px"),enabled = TRUE),
             events = list(click = ClickFunction)))  %>%
            hc_credits(enabled = F) %>%
-           hc_legend(enabled = F)
-      
+          hc_title(text = list(l2[[Clicked]][2,1])) %>%
+           hc_legend(enabled = T)
+        
         })
-      }else {NULL}
-      
+        )
+        
+      #session$sendCustomMessage('Clicked', "Shiny.setInputValue('Clicked', '0');")
+      print(paste("jidw",input$Clicked))
+      print(paste("-->", unNonce("Clicked"),"<<-"))
+      print(paste("m",input$Clicked[1]))}
     )
+    delay(10000, print(paste0(input$Clicked)))
+    fxn <- "click"
+    fxn <- paste0("shinyjs-", fxn)
+    params <- list(id = "btn-1-front", asis = TRUE)
     
+    params[["id"]] <- session$ns(params[["id"]])
+    session$sendCustomMessage(type = fxn , message = params) 
+     
+    #register handler for back button to null hc? from js to r?
     
-    
-    JS("setInterval(function(){ $('#reactiveButton').click(); }, 1000*4);")
-    
- 
-   
-    makeReactiveBinding("outputText")
 
-    observeEvent(input$Clicked, {
+    #observe fuer  back button
+  # observe(input$btn-1-front, print("fj"))
+
+    
+    # highchart(type = "map") %>% 
+    #   hc_plotOptions(map = list(mapData = worldgeojson)) %>%
+    #   hc_add_series( data= data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"),  value =as.vector(unlist(l2[[1]][2,3:5]))), value = "value", joinBy = "name", name = "test") %>%
+    # hc_add_series_map(map =worldgeojson, df= data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"),  value =as.vector(unlist(l2[[1]][2,3:5]))), value = "value", joinBy = "name", name = "test")
+    #   
+
+    JS("setInterval(function(){ $('#reactiveButton').click(); }, 1000*4);")  #muss in script eingebunden werden
+    
+   
+    makeReactiveBinding("outputText")  #unnoetig
+
+    observeEvent(input$Clicked, {  #monitor um eingabe in console zu prüfen
       print(paste0(input$Clicked))
+      print(paste0(input$event.point.index, "fj"))
       outputText <<- paste0(input$Clicked)
     })
-    observeEvent(input$switch, {
+    observeEvent(input$switch, {   #gehört zu hcchaarts 
       switch <- switch(input$switch, "bar", "column")
       print(paste0(switch))
       print(paste0(input$switch))
       })
 
-    output$text <- renderText({
+    output$text <- renderText({  #unnötig
       outputText
     })
     
-    # Observe for third theme update
+     
+    # Observe for third topic update of inputselections
     observeEvent(input$thema, {
       if (input$thema == "Politische Aktion") {
-      updateRadioGroupButtons(session,"test",size = "normal",choices = c("None","Migration"))
+      updateRadioGroupButtons(session,"test",label = i18n_r()$t("Sociodemographic"),size = "normal",choices = i18n_r()$t(c("None","Migration")))
       } 
       else {
-      updateRadioGroupButtons(session,"test",size = "normal",choices = c("None","Migration", "Alter", "Geschlecht","Status"))
-        
+      updateRadioGroupButtons(session,"test",size = "normal",choices = i18n_r()$t(c("None","Migration", "Alter", "Geschlecht","Status")))
       }
+        
       
     })
-
-} #/server function 
+    # rename
+    i18n_r <- reactive({
+      i18n
+    })
+    observe({
+      updateRadioGroupButtons(session,"thema",label = i18n_r()$t("Thema"),size = "normal",choices = i18n_r()$t(c("Identitaet","Politisches Interesse","Politische Aktion")))
+    })
     
-    #output$n_movies <- renderText({ nrow(movies()) })
     
-#     output$distPlot <- renderPlot({
-#         # generate bins based on input$bins from ui.R
-#         x    <- faithful[, 2]
-#         bins <- seq(min(x), max(x), length.out = input$bins + 1)
-# 
-#         # draw the histogram with the specified number of bins
-#         hist(x, breaks = bins, col = 'darkgray', border = 'white')
-#     })
-# }
+    # sprache obs -------------------------------------------------------------
+    
+    observeEvent(input$selected_language,ignoreInit = T, {
+      # This print is just for demonstration
+      print(paste("Language change!", input$selected_language))
+      # Here is where we update language in session
+      shiny.i18n::update_lang(session, input$selected_language)
+    })
+  
+    
+    
+   
+   
+    #reactivce translations for ui buttons
+    # i18n_r <- reactive({
+    #   i18n
+    # })
+    # 
+    # 
+    # observe({
+    #   updateRadioGroupButtons(session, "thema", label = i18n_r()$t("Thema"),
+    #                           choiceNames = i18n_r()(c("Identitaet","Politisches Interesse","Politische Aktion")) )
+    #   
+    # })
+    
+} 
 
-# Run the application 
 shinyApp(ui = ui, server = server)
 
-#comments
 # conditonalPanel Funktion auf Server verschieben. Sinnvoller, um Ressourcen zu sparen.

@@ -3,12 +3,12 @@ library("highcharter")
 
 ui <- shinyUI(
     fluidPage(
-        column(width = 8, highchartOutput("hcontainer", height = "500px")),
+        column(width = 8, div(highchartOutput("hcontainer", height = "500px"),style = "font-size: 10%")),
         column(width = 4, textOutput("text"))
     )
 )
 
-server <- function(input, output) {      
+server <- function(input, output,session) {      
     
     a <- data.frame(b = LETTERS[1:10], b_alt = LETTERS[11:20], c = 11:20, d = 21:30, e = 31:40)
     
@@ -17,11 +17,12 @@ server <- function(input, output) {
         canvasClickFunction <- JS("function(event) {Shiny.onInputChange('canvasClicked', [this.name, event.point.category]);}")
         legendClickFunction <- JS("function(event) {Shiny.onInputChange('legendClicked', this.name);}")
         
-        highchart() %>% 
+        highchart(elementId = "54") %>% 
             hc_xAxis(categories = a$b) %>% 
             hc_add_series(name = "c", data = a$c) %>%
             hc_add_series(name = "d", data = a$d) %>% 
-            hc_add_series(name = "e", data = a$e) %>%
+            hc_add_series(style = list('<span style="font-size:100px"></span>'),name = "e", data = a$e) %>%
+            hc_title(text = "if")%>%
             hc_plotOptions(series = list(stacking = FALSE, events = list(click = canvasClickFunction, legendItemClick = legendClickFunction))) %>%
             hc_chart(type = "column")
         
@@ -39,6 +40,16 @@ server <- function(input, output) {
     
     output$text <- renderText({
         outputText      
+    })
+    observe({
+    session$sendCustomMessage(
+        type = "updateHighchart", 
+        message = list(
+            # Name of chart to update
+            # Smoothed value (average of last 10)
+            y1 = NULL
+            )
+        ) sliderInput()
     })
 }
 

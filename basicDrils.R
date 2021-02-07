@@ -126,3 +126,6 @@ bigger  <- 0
 }
 calcf(n =1000000)
 
+
+
+#    shinyjs::toggle("myBox") <- für einfaches einklappen einer box() <- ui

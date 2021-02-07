@@ -1,0 +1,16 @@
+
+.slider {
+  height:5px;
+  width:300px;
+  background-color:#555;
+  border-radius: 30px;
+  margin-bottom:30px;
+}
+.scrub {
+  position:absolute;
+  font-size:50px;
+  margin-top:-27px;
+  color:#e33;
+  padding-left:5px;
+  padding-right:5px;
+}
