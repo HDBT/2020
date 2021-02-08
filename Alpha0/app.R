@@ -76,6 +76,9 @@ script <- '
         console.log("hello from function hello!");
     };
 '
+
+
+
 # sprache -----------------------------------------------------------------
 
 # UI
@@ -96,14 +99,14 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                       header_img = NULL  ,
                                       back_content  = tagList(column(12,highchartOutput("hcchart2"))) #"The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg."
                                       ,
-                                      radioGroupButtons("thema",i18n$t("Thema"), choiceNames = c("Identitaet","Politisches Interesse","Politische Aktion"),choiceValues = c("Identität","Politisches Interesse","Politische Aktion"), size = "normal",direction = "horizontal"),
+                                      radioGroupButtons("thema",i18n$t("Theme"), choiceNames = c("Identity","Political Interest","Political Participation"),choiceValues = c("Identity","Political Interest","Political Participation"), size = "normal",direction = "horizontal"),
                                       fluidRow(
                                          column(2,
                                                 fluidRow(
                                                    column(1),
                                                    column(11,
                                                           br(),
-                                                    radioGroupButtons("test",i18n$t("Sociodemographic"), choices = c("None","Migration", "Alter", "Geschlecht","Status"),size = "normal",direction = "vertical", selected = "None")
+                                                    radioGroupButtons("test",i18n$t("Sociodemographic"), choices = c("None","Migration", "Age", "Gender","Status"),size = "normal",direction = "vertical", selected = "None")
                                                     #,highchartOutput("hcchart2")
                                                    ) 
                                                 )    
@@ -119,15 +122,16 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                                 tags$style(HTML("#lang_div .shiny-input-container  {font-size: 16px;}")),  #individuelles style setzen indem man eine eigens erstellte id anspricht
                                                  div(id ="lang_div",prettySwitch(inputId = "switch","Spaltendiagramm",slim = T, value = TRUE),#div() um eigene ID zu setzen fürs ansprechen (individuelle style tags z.b.)
                                                  tags$div(  
-                                                   style='float: right;width: 70px;',
+                                                   style='float: right;width: 100px;',
                                                    selectInput(
                                                      inputId='selected_language',
                                                      label=i18n$t('Change language'),
-                                                     choices = i18n$get_languages(),
+                                                     choices = c("English" = "en", "Deutsch" = "de"),
                                                      selected = i18n$get_key_translation()
                                                    )
                                                  )
                                                  )
+                                                            
                                         )      
                                  
                                        ),
@@ -330,6 +334,7 @@ server <- function(input, output,session) {
     # 
     ClickFunction <-  JS("function(event) {var rr = event.point.index; var rr = {rr, '.nonce': Math.random()};Shiny.onInputChange('Clicked',rr);}")
     #ClickFunction <-  JS("function(event) {Shiny.onInputChange('Clicked',event.point.index);}")
+     colors <- c("#e41618","#52bde7","#4d4d52","#90b36d","#f5951f","#6f4b89","#3fb54e","#eea4d8")
 
 # Tab2 Vis ----------------------------------------------------------------
    output$hcchart1 <- renderHighchart({
@@ -350,11 +355,8 @@ server <- function(input, output,session) {
     } else { switch <- "bar"
     }  
      
-     colors <- c("#e41618","#52bde7","#4d4d52","#90b36d","#f5951f","#6f4b89","#3fb54e","#eea4d8")
-     
-     
      addPopover(session, "hcchart1", "Infos", content = paste0("weiterführende Infos"), trigger = "click")
-    hc <-   highchart() %>%
+      hc <-   highchart() %>%
       hc_xAxis(labels = list(style = list(fontSize = "16px"))) %>% 
        hc_yAxis(labels= list(format = "{value} %", style = list(fontSize = "16px"))) %>%
       hc_chart(type = switch)%>%
@@ -370,7 +372,7 @@ server <- function(input, output,session) {
       #hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu",text = "Download", menuItems = "null", onclick = JS("function () { this.renderer.label('efwfe',100,100).attr({fill:'#a4edba',r:5,padding: 10, zIndex: 10}) .css({ fontSize: '1.5em'}) .add();}") )), filename = "custom-file-name_Luxembourg_Data") 
       #switch <- switch(input$switch, TRUEE = "column", "FALSE" = "column", "column")
     
-     if (input$test == i18n$t("None") & input$thema == i18n$t("Identität")) {
+     if (input$test == i18n_r()$t("None") & input$thema == i18n_r()$t("Identity")) {
        #dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
 
        hc %>% 
@@ -380,28 +382,28 @@ server <- function(input, output,session) {
 
      }
     
-     else if (input$test == "Migration" & input$thema == "Identität") { #vorher MIgration
+     else if (input$test == i18n_r()$t("Migration") & input$thema == i18n_r()$t("Identity")) { #vorher MIgration
      
   
       hc %>% 
       hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by migration.")%>%
       hc_xAxis(categories = dfx$name) %>% 
       hc_add_series(name= i18n$t("No migration background"), data =dfx[c("name","y")] )%>%
-      hc_add_series(name= "Parents imigrated",data =dfx$y1 ) %>%
-      hc_add_series(name= "Self-Immigrated", data =dfx$y2) 
+      hc_add_series(name= i18n$t("Parents immigrated"),data =dfx$y1 ) %>%
+      hc_add_series(name= i18n$t("Self-immigrated"), data =dfx$y2) 
     }
-    else if (input$test == "Alter" & input$thema == "Identität") {
+    else if (input$test == i18n_r()$t("Age") & input$thema == i18n_r()$t("Identity")) {
 
           hc %>%
             hc_title(text = "Percentage of answers “Very Important” and “Important” according to the dimensions of National Identity by  age.")%>%
           hc_plotOptions(bar = list(stacking = "percent")) %>%
           hc_xAxis(categories = df2$name) %>%
-          hc_add_series(name= "16-20", data =df2$y )%>%
-          hc_add_series(name= "21-25",data =df2$y1 ) %>%
-          hc_add_series(name= "26-29", data =df2$y2)
+          hc_add_series(name= i18n$t("16-20"), data =df2$y )%>%
+          hc_add_series(name= i18n$t("21-25"),data =df2$y1 ) %>%
+          hc_add_series(name= i18n$t("26-29"), data =df2$y2)
     }
    
-    else if (input$test == "Geschlecht" & input$thema == "Identität") {
+    else if (input$test == i18n_r()$t("Gender") & input$thema == i18n_r()$t("Identity")) {
 
       
       
@@ -410,10 +412,10 @@ server <- function(input, output,session) {
         
       #hc_plotOptions(bar = list(stacking = "percent")) %>% 
       hc_xAxis(categories = df3$name) %>% 
-      hc_add_series(name= "Female", data =df3$y )%>%
-      hc_add_series(name= "Male",data =df3$y1 )
+      hc_add_series(name= i18n$t("Female"), data =df3$y )%>%
+      hc_add_series(name= i18n$t("Male"),data =df3$y1 )
     }
-    else if (input$test == "Status" & input$thema == "Identität") {
+    else if (input$test == i18n_r()$t("Status") & input$thema == i18n_r()$t("Identity")) {
       
       
       
@@ -422,96 +424,96 @@ server <- function(input, output,session) {
         
         #hc_plotOptions(bar = list(stacking = "percent")) %>% 
         hc_xAxis(categories = df4$name) %>% 
-        hc_add_series(name= "Students", data =df4$y )%>%
-        hc_add_series(name= "Employed",data =df4$y1 ) %>%
-        hc_add_series(name= "NEET",data =df4$y2 )
+        hc_add_series(name= i18n$t("Students"), data =df4$y )%>%
+        hc_add_series(name= i18n$t("Employed"),data =df4$y1 ) %>%
+        hc_add_series(name= i18n$t("NEET"),data =df4$y2 )
         
     }
     
     
-    else if (input$test == "None" & input$thema == "Politisches Interesse") {
+    else if (input$test == i18n_r()$t("None") & input$thema == i18n_r()$t("Political Interest")) {
       
-      df5 <- tibble(name = c("Extremely","Very","Medium","Not Very","Not at all"),y = c(5,15,39,27,14))
+      df5 <- tibble(name = i18n$t(c("Extremely","Very","Medium","Not Very","Not at all")),y = c(5,15,39,27,14))
       hc %>% 
         hc_title(text = "How young individuals are interested in politics.")%>%
         #hc_plotOptions(bar = list(stacking = "percent")) %>% 
         hc_xAxis(categories = df5$name) %>% 
-        hc_add_series(name= " ", data =df5$y )
+        hc_add_series(name= " ", data =df5$y ,showInLegend = F)
 
       
     }
     
     
-    else if (input$test == "Migration" & input$thema == "Politisches Interesse") {
+    else if (input$test == i18n_r()$t("Migration") & input$thema == i18n_r()$t("Political Interest")) {
       
-      df6 <- tibble(name = c("Very Interested","Moderately Interested","Not interested"),y = c(22,39,39), y1 = c(13,40,44), y2 = c(20,35,55))
+      df6 <- tibble(name = i18n$t(c("Very Interested","Moderately Interested","Not interested")),y = c(22,39,39), y1 = c(13,40,44), y2 = c(20,35,55))
       hc %>% 
         hc_title(text = "How young individuals are interested in politics by migration background.")%>%
         #hc_plotOptions(bar = list(stacking = "percent")) %>% 
         hc_xAxis(categories = df6$name) %>% 
-        hc_add_series(name= "No Migration Background", data =df6$y )%>%
-        hc_add_series(name= "Parents Immigrated",data =df6$y1 ) %>%
-        hc_add_series(name= "Self Immigrated",data =df6$y2 )
+        hc_add_series(name= i18n$t("No migration background"), data =df6$y )%>%
+        hc_add_series(name= i18n$t("Parents immigrated"),data =df6$y1 ) %>%
+        hc_add_series(name= i18n$t("Self-immigrated"),data =df6$y2 )
       
       
     }
-    else if (input$test == "Alter" & input$thema == "Politisches Interesse") {
+    else if (input$test == i18n_r()$t("Age") & input$thema == i18n_r()$t("Political Interest")) {
       
-      df6 <- tibble(name = c("Very Interested","Moderately Interested","Not interested"),y = c(15,37,49), y1 = c(21,38,41), y2 = c(22,39,40))
+      df6 <- tibble(name = i18n$t(c("Very Interested","Moderately Interested","Not interested")),y = c(15,37,49), y1 = c(21,38,41), y2 = c(22,39,40))
       hc %>% 
         hc_title(text = "How young individuals are interested in politics by age.")%>%
         #hc_plotOptions(bar = list(stacking = "percent")) %>% 
         hc_xAxis(categories = df6$name) %>% 
-        hc_add_series(name= "16-20 y.o.", data =df6$y )%>%
-        hc_add_series(name= "21-25 y.o.",data =df6$y1 ) %>%
-        hc_add_series(name= "26-29 y.o.",data =df6$y2 )
+        hc_add_series(name= i18n$t("16-20 y.o."), data =df6$y )%>%
+        hc_add_series(name= i18n$t("21-25 y.o."),data =df6$y1 ) %>%
+        hc_add_series(name= i18n$t("26-29 y.o."),data =df6$y2 )
       
       
     }
-    else if (input$test == "Geschlecht" & input$thema == "Politisches Interesse") {
+    else if (input$test == i18n_r()$t("Gender") & input$thema == i18n_r()$t("Political Interest")) {
       
-      df7 <- tibble(name = c("Very Interested","Moderately Interested","Not interested"),y = c(12,49,49), y1 = c(25,48,39))
+      df7 <- tibble(name = i18n$t(c("Very Interested","Moderately Interested","Not interested")),y = c(12,49,49), y1 = c(25,48,39))
       hc %>% 
         hc_title(text = "How young individuals are interested in politics by gender.")%>%
         #hc_plotOptions(bar = list(stacking = "percent")) %>% 
         hc_xAxis(categories = df7$name) %>% 
-        hc_add_series(name= "Female", data =df7$y )%>%
-        hc_add_series(name= "Male",data =df7$y1 )
+        hc_add_series(name= i18n$t("Female"), data =df7$y )%>%
+        hc_add_series(name= i18n$t("Male"),data =df7$y1 )
       
       
     }
-    else if (input$test == "Status" & input$thema == "Politisches Interesse") {
+    else if (input$test == i18n_r()$t("Status") & input$thema == i18n_r()$t("Political Interest")) {
       
-      df8 <- tibble(name = c("Very Interested","Moderately Interested","Not interested"),y = c(19,40,41), y1 = c(21,37,42), y2 = c(15,38,47))
+      df8 <- tibble(name = i18n$t(c("Very Interested","Moderately Interested","Not interested")),y = c(19,40,41), y1 = c(21,37,42), y2 = c(15,38,47))
       hc %>% 
         hc_title(text = "How young individuals are interested in politics by living status.")%>%
         #hc_plotOptions(bar = list(stacking = "percent")) %>% 
         hc_xAxis(categories = df8$name) %>% 
-        hc_add_series(name= "Students", data =df8$y )%>%
-        hc_add_series(name= "Employed",data =df8$y1 )%>%
-        hc_add_series(name= "NEET",data =df8$y2 )
+        hc_add_series(name= i18n$t("Students"), data =df8$y )%>%
+        hc_add_series(name= i18n$t("Employed"),data =df8$y1 )%>%
+        hc_add_series(name= i18n$t("NEET"),data =df8$y2 )
     }
     
-    else if (input$test == "None" & input$thema == "Politische Aktion") {
+    else if (input$test == i18n_r()$t("None") & input$thema == i18n_r()$t("Political Participation")) {
       
       df9 <- tibble(name = c("Taking part in public discussion","Getting involved in citizens initiative","Getting involved in a political party","Taking part in unauthorised demonstration", "Taking part in authorised demonstration", "Taking part in a signature collection campaign", "Boycotting or purchasing goods for political reasons", "Taking part in an online protest", "Posting or sharing something about politics online"),y = c(24,23,23,24,31,33,37,32,33))
       hc %>% 
         hc_title(text = "Political actions done before.")%>%
         #hc_plotOptions(bar = list(stacking = "percent")) %>% 
         hc_xAxis(categories = df9$name) %>% 
-        hc_add_series(name= "", data =df9$y )
+        hc_add_series(name= "", data =df9$y ,showInLegend = F)
     }
     
-    else if (input$test == "Migration" & input$thema == "Politische Aktion") {
+    else if (input$test == i18n_r()$t("Migration") & input$thema == i18n_r()$t("Political Participation")) {
       
       df10 <- tibble(name = c("Taking part in public discussion","Getting involved in citizens initiative","Getting involved in a political party","Taking part in unauthorised demonstration", "Taking part in authorised demonstration", "Taking part in a signature collection campaign", "Boycotting or purchasing goods for political reasons", "Taking part in an online protest", "Posting or sharing something about politics online"),y = c(25,18,32,31,28,31,39,34,37), y1 = c(24,23,19,20,35,33,40,33,36), y2 = c(19,21,10,11,30,31,31,30,31)) #, y3 = c(24), y4 = c(33), y5 = c(37), y6 = c(33), y7 = c(32), y8 = c(33))
       hc %>% 
         hc_title(text = "Political actions done before by migration background.")%>%
         #hc_plotOptions(bar = list(stacking = "percent")) %>% 
         hc_xAxis(categories = df10$name) %>% 
-        hc_add_series(name= "No migration background", data =df10$y )%>%
-        hc_add_series(name= "Parents Immigrated", data =df10$y1 )%>%
-        hc_add_series(name= "Self Immigrated", data =df10$y2 )
+        hc_add_series(name= i18n$t("No migration background"), data =df10$y )%>%
+        hc_add_series(name= i18n$t("Parents immigrated"), data =df10$y1 )%>%
+        hc_add_series(name= i18n$t("Self-immigrated"), data =df10$y2 )
       
     }
     
@@ -619,21 +621,21 @@ server <- function(input, output,session) {
      
     # Observe for third topic update of inputselections
     observeEvent(input$thema, {
-      if (input$thema == "Politische Aktion") {
+      if (input$thema == i18n_r()$t("Political Participation")) {
       updateRadioGroupButtons(session,"test",label = i18n_r()$t("Sociodemographic"),size = "normal",choices = i18n_r()$t(c("None","Migration")))
       } 
       else {
-      updateRadioGroupButtons(session,"test",size = "normal",choices = i18n_r()$t(c("None","Migration", "Alter", "Geschlecht","Status")))
+      updateRadioGroupButtons(session,"test",size = "normal",choices = i18n_r()$t(c("None","Migration", "Age", "Gender","Status")))
       }
         
       
     })
-    # rename
+    # rename #github examp.
     i18n_r <- reactive({
       i18n
     })
-    observe({
-      updateRadioGroupButtons(session,"thema",label = i18n_r()$t("Thema"),size = "normal",choices = i18n_r()$t(c("Identitaet","Politisches Interesse","Politische Aktion")))
+    observe({  #reactive update for labels
+      updateRadioGroupButtons(session,"thema",label = i18n_r()$t("Theme"),size = "normal",choices = i18n_r()$t(c("Identity","Political Interest","Political Participation")))
     })
     
     

@@ -132,3 +132,9 @@
 
 #dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
 
+
+# HTML ICONS in choices einbinden
+# pickerInput("f","jeifj", choices = c("en","de"), 
+#             choicesOpt = list(content = mapply(flags, FUN = function(flags) {
+#               HTML(tags$img(src = flags, width = 20, height = 15))
+#             }, SIMPLIFY = F, USE.NAMES = F)) )
