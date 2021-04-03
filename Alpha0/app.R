@@ -21,7 +21,7 @@ library(dplyr)
 #install.packages("fusionchartsR")
 #require(fusionchartsR)
 #library(shinycustomloader)
-source("global.r")
+#source("global.r")
 source("flipBox.R")
 source("map.r")
 #library(ggvis) 
@@ -86,6 +86,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
   useShinyjs(),
   tags$head(tags$script(' document.getElementById("Clicked").onclick = function() {
  Shiny.onInputChange("Clicked", NULL); }; ')),
+  tags$head(tags$script('function printChart() { hcchart1.print() ;};')),
   tags$head(tags$style(HTML('* {font-family: "Helvetica" !important};'))), # * um jedes Element zu selektieren. !important um  optionen in den Kasaden zu überschreiben
   tags$head(tags$style(HTML(".shiny-input-container { font-size: 18px; }"))), #funzt
   tags$head(tags$style(HTML(".highcharts-input-container { font-size: 60px; }"))), #funzt nicht
@@ -143,7 +144,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
 
 
 server <- function(input, output,session) {
-  source("global.r")
+  #source("global.r")
   
     # 
     # # filter the obs, returning a subset dataframe
@@ -332,6 +333,8 @@ server <- function(input, output,session) {
     #               highchart() %>% hc_xAxis(type = "category") %>% hc_add_series_list(dat) 
     # })
     # 
+  # Set highcharter options
+  #options(highcharter.theme = hc_theme_smpl(tooltip = list(valueDecimals = 2)))
     ClickFunction <-  JS("function(event) {var rr = event.point.index; var rr = {rr, '.nonce': Math.random()};Shiny.onInputChange('Clicked',rr);}")
     #ClickFunction <-  JS("function(event) {Shiny.onInputChange('Clicked',event.point.index);}")
      colors <- c("#e41618","#52bde7","#4d4d52","#90b36d","#f5951f","#6f4b89","#3fb54e","#eea4d8")
@@ -363,7 +366,7 @@ server <- function(input, output,session) {
       hc_colors(colors) %>% 
       hc_title(style = list(fontSize = "18px")) %>%
       hc_subtitle(text = "Luxembourg, 2019") %>%
-       hc_plotOptions(series = list(#column = list(stacking = "normal"), 
+      hc_plotOptions(series = list(#column = list(stacking = "normal"), 
         borderWidth=0,
         dataLabels = list(style = list(fontSize = "14px"),enabled = TRUE),
         events = list(click = ClickFunction)))%>%
@@ -577,13 +580,18 @@ server <- function(input, output,session) {
       print(paste("-->", unNonce("Clicked"),"<<-"))
       print(paste("m",input$Clicked[1]))}
     )
+    
+
+# custom session message for rotation ---------------------------------------------
+
+    
     delay(10000, print(paste0(input$Clicked)))
     fxn <- "click"
     fxn <- paste0("shinyjs-", fxn)
     params <- list(id = "btn-1-front", asis = TRUE)
     
     params[["id"]] <- session$ns(params[["id"]])
-    session$sendCustomMessage(type = fxn , message = params) 
+   # session$sendCustomMessage(type = fxn , message = params) # Works quite well!
      
     #register handler for back button to null hc? from js to r?
     

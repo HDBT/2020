@@ -2,15 +2,17 @@ library(shiny)
 library(shiny.i18n)
 library(shinyWidgets)
 library(highcharter)
-i18n <- Translator$new(translation_csvs_path = "../Alpha0")
-
+library(dplyr)
+#i18n <- Translator$new(translation_csvs_path = "../Alpha0")
+i18n <- Translator$new(translation_json_path  = "translation.json")
+i18n$set_translation_language("pt")
 ui <- fluidPage(
     usei18n(i18n),
     h1(i18n$t("Hello")),
     actionButton("change", i18n$t("Change language")),
     radioGroupButtons("radio", i18n$t("Radio"), c("Identitaet", "Theme")),
     selectInput("select", i18n$t("Choose"), c("one", "two", "three")),
-    radioGroupButtons("test",i18n$t("Thema"), choiceNames = c("Identitaet","Politisches Interesse","Politische Aktion"),choiceValues = c("Identität","Politisches Interesse","Politische Aktion"), size = "normal",direction = "horizontal")
+    radioGroupButtons("test",i18n$t("Ich bin chronisch krank oder körperlich beeinträchtigt oder psychisch beeinträchtigt"), choiceNames = c("Identitaet","Politisches Interesse","Ich bin chronisch krank oder körperlich beeinträchtigt oder psychisch beeinträchtigt"),choiceValues = c("Identität","Politisches Interesse","Politische Aktion"), size = "normal",direction = "horizontal")
     ,highchartOutput("hcchart1")
 )
 
