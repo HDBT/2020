@@ -1,10 +1,6 @@
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
+#https://rstudio-pubs-static.s3.amazonaws.com/304105_70f2ad540827454e934117e3d90f6c1a.html
+# unbedingt reinschauen!
+
 #
 #library(geojsonio)
 library(shiny)
@@ -28,7 +24,7 @@ source("map.r")
 #library(plyr)
 library(shiny.i18n) #dev version wegen google probs
 
-i18n <- Translator$new(translation_csvs_path = "../Module")
+i18n <- Translator$new(translation_json_path = "../Module/translation.json")
 #i18n <- Translator$new(automatic = TRUE)
 i18n$set_translation_language('en')
 
@@ -102,7 +98,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
                              header_img = NULL  ,
                              back_content  = tagList(column(12,highchartOutput("hcchart2"))) #"The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg."
                              ,
-                             radioGroupButtons("thema",i18n$t("Theme"), choiceNames = c("Identity","Political Interest","Political Participation"),choiceValues = c("Identity","Political Interest","Political Participation"), size = "normal",direction = "horizontal"),
+                             radioGroupButtons("thema",i18n$t("Theme"), choiceNames = c("2020","2019","Diff "),choiceValues = c("2020","2019","Diff "), size = "normal",direction = "horizontal"),
                              fluidRow(
                                  column(2,
                                         fluidRow(
@@ -129,7 +125,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                                 selectInput(
                                                     inputId='selected_language',
                                                     label=i18n$t('Change language'),
-                                                    choices = c("English" = "en", "Deutsch" = "de"),
+                                                    choices = c("English" = "en", "Deutsch" = "de", "Français" = "fr"),
                                                     selected = i18n$get_key_translation()
                                                 )
                                             )
@@ -146,9 +142,9 @@ ui <- fluidPage(#theme = "bootstrap.css",
 
 
 server <- function(input, output,session) {
-  hide("thema")
-  
+
   get(load("data.RData",envir = .GlobalEnv))
+  get(load("data19.RData",envir = .GlobalEnv))
     #source("global.r")
     
     # 
@@ -352,6 +348,11 @@ server <- function(input, output,session) {
         dfx <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = ma[1,], y1 = ma[2,],y2= ma[3,], n = c("9","8","1") )
         df3 <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = mg[1,], y1 = mg[2,])
         df2 <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = ms[1,], y1 = ms[2,],y2= ms[3,])
+        
+        #uebersetzung hier noetig, da das Dataframe format nicht wie vorher zerlegt ist
+        df_gender <- df_gender %>% mutate(Var2 = i18n$t(as.character(Var2)))
+        df_status <- df_status %>% mutate(Var2 = i18n$t(as.character(Var2)))
+          
 
         df_l  <- lst(dfn,dfx)
         print(head(df_l))
@@ -361,7 +362,12 @@ server <- function(input, output,session) {
         {switch <-"column"
         } else { switch <- "bar"
         }  
-        
+        if (input$thema == i18n_r()$t("2019") ){
+          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593"
+        }else{
+          
+          subtitle <- "Source: Youth Survey Luxembourg 2020, n = 4189"
+        }
         addPopover(session, "hcchart1", "Infos", content = paste0("weiterführende Infos"), trigger = "click")
         hc <-   highchart() %>%
             hc_xAxis(labels = list(style = list(fontSize = "16px"))) %>% 
@@ -369,7 +375,7 @@ server <- function(input, output,session) {
             hc_chart(type = switch)%>%
             hc_colors(colors) %>% 
             hc_title(style = list(fontSize = "18px")) %>%
-            hc_subtitle(text = "Luxembourg, 2019") %>%
+            hc_subtitle(text = i18n$t(subtitle)) %>%
             hc_plotOptions(series = list(#column = list(stacking = "normal"), 
                 borderWidth=0,
                 dataLabels = list(style = list(fontSize = "14px"),enabled = TRUE),
@@ -380,42 +386,102 @@ server <- function(input, output,session) {
         #hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu",text = "Download", menuItems = "null", onclick = JS("function () { this.renderer.label('efwfe',100,100).attr({fill:'#a4edba',r:5,padding: 10, zIndex: 10}) .css({ fontSize: '1.5em'}) .add();}") )), filename = "custom-file-name_Luxembourg_Data") 
         #switch <- switch(input$switch, TRUEE = "column", "FALSE" = "column", "column")
         
-        if (input$test == i18n_r()$t("None") & input$thema == i18n_r()$t("Identity")) {
+        if (input$test == i18n_r()$t("None") & input$thema == i18n_r()$t("2019")) {
+          #dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
+          
+          hc %>%
+            hc_title(text = i18n$t("Percentage of answers “One or more days” according to substance consumption in the previous 30 days."))%>%
+            hc_tooltip(headerFormat = '<span style="font-size:16px"><b>{point.key}{point.n}</b></span><table>',pointFormatter= JS("function () { return  '<tr><td style = color:'+ this.color +';font-size:16px;padding:0;>'  +'</td>'+ '<td style =font-size:16px;padding:0;>' +'<b>' + this.y.toFixed(1) +'%' +'</td>' + '<td>'+ '<b/>' + ' \u00B1' + (Math.sqrt(((this.y/100)*(1-(this.y/100)))  /1000)*2*100).toFixed(1) + '%' + '</b>'+ '</td>'+'</tr>';  }"), shared= TRUE,footerFormat = '{series.n}{this.n}</table> ',useHTML =T) %>%
+            
+            hc_add_series(df0, "column",hcaes(x = Var1, y = Freq*100),showInLegend = FALSE,
+                          tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
+            #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
+            #             centerInCategory = TRUE, groupPadding = .68,
+            #            hcaes(x = ShareType, low = lower, high = upper, group = Gender)) %>%
+            hc_xAxis(categories = df0$Var1, title = list(text = "Konsum"))
+          
+        }
+        else if (input$test == i18n_r()$t("Age") & input$thema == i18n_r()$t("2019")) { #vorher MIgration
+          
+          
+          hc %>%
+            hc_title(text = i18n$t("Percentage of answers “One or more days” according to substance consumption in the previous 30 days by age."))%>%
+            hc_add_series(df_age, "column",hcaes(x = Var1, y = Freq*100, group = Var2),
+                          tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
+            #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
+            #             centerInCategory = TRUE, groupPadding = .68,
+            #            hcaes(x = ShareType, low = lower, high = upper, group = Gender)) %>%
+            hc_xAxis(categories = i18n$t(as.character(df_age$Var1[order(df_age$Var2)])), title = list(text = "Konsum"))
+          
+        }
+        else if (input$test == i18n_r()$t("Gender") & input$thema == i18n_r()$t("2019")) {
+          
+          hc %>%
+            hc_title(text = i18n$t("Percentage of answers “One or more days” according to substance consumption in the previous 30 days by gender."))%>%
+            hc_add_series(df_gender, "column",hcaes(x = Var1, y = Freq*100, group = Var2),
+                          tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
+            #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
+            #             centerInCategory = TRUE, groupPadding = .68,
+            #            hcaes(x = ShareType, low = lower, high = upper, group = Gender)) %>%
+            hc_xAxis(categories = i18n$t(as.character(df_gender$Var1[order(df_gender$Var2)])), title = list(text = "Konsum"))
+          
+        }
+        
+        else if (input$test == i18n_r()$t("Status") & input$thema == i18n_r()$t("2019")) {
+          
+          hc %>%
+            hc_title(text = i18n$t("Percentage of answers “One or more days” according to substance consumption in the previous 30 days by ZZZstatus."))%>%
+            hc_add_series(df_status, "column",hcaes(x = Var1, y = Freq*100, group = Var2),
+                          tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
+            #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
+            #             centerInCategory = TRUE, groupPadding = .68,
+            #            hcaes(x = ShareType, low = lower, high = upper, group = Gender)) %>%
+            hc_xAxis(categories = i18n$t(as.character(df_status$Var1[order(df_status$Var2)])), title = list(text = "Konsum")) 
+          
+          
+        }
+        
+        
+        
+        
+        else if (input$test == i18n_r()$t("None") & input$thema == i18n_r()$t("2020")) {
             #dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
             
             hc %>% 
-                hc_title(text = "Percentage of answers “One or more days” according to substance consumption in the previous 30 days.")%>%
+            hc_tooltip(headerFormat = '<span style="font-size:16px"><b>{point.key}{point.n}</b></span><table>',pointFormatter= JS("function () { return  '<tr><td style = color:'+ this.color +';font-size:16px;padding:0;>'  +'</td>'+ '<td style =font-size:16px;padding:0;>' +'<b>' + this.y.toFixed(1) +'%' +'</td>' + '<td>'+ '<b/>' + ' \u00B1' + (Math.sqrt(((this.y/100)*(1-(this.y/100)))  /1000)*2*100).toFixed(1) + '%' + '</b>'+ '</td>'+'</tr>';  }"), shared= TRUE,footerFormat = '{series.n}{this.n}</table> ',useHTML =T) %>%
+            
+                hc_title(text = i18n$t("Percentage of answers “One or more days” according to substance consumption in the previous 30 days."))%>%
                 hc_xAxis(categories = dfn$name ,additonialInfo = 1:4 ) %>% 
                 hc_add_series(name= " ",data =l2$dfn[c("name","y")] ,showInLegend = F)
             
         }
         
-        else if (input$test == i18n_r()$t("Status") & input$thema == i18n_r()$t("Identity")) { #vorher MIgration
+        else if (input$test == i18n_r()$t("Status") & input$thema == i18n_r()$t("2020")) { #vorher MIgration
             
             
             hc %>% 
-                hc_title(text = "Percentage of answers “One or more days” according to substance consumption in the previous 30 days by status")%>%
+                hc_title(text = i18n$t("Percentage of answers “One or more days” according to substance consumption in the previous 30 days by status"))%>%
                 hc_xAxis(categories = df2$name) %>% 
                 hc_add_series(name= i18n$t("Student"), data =df2[c("name","y")] )%>% # unnecessary "name?
                 hc_add_series(name= i18n$t("Employed"),data =df2$y1 ) %>%
                 hc_add_series(name= i18n$t("NEET"), data =df2$y2) 
         }
-        else if (input$test == i18n_r()$t("Age") & input$thema == i18n_r()$t("Identity")) {
+        else if (input$test == i18n_r()$t("Age") & input$thema == i18n_r()$t("2020")) {
             
             hc %>%
-                hc_title(text = "Percentage of answers “One or more days” according to substance consumption in the previous 30 days by age.")%>%
+                hc_title(text = i18n$t("Percentage of answers “One or more days” according to substance consumption in the previous 30 days by age."))%>%
                 hc_plotOptions(bar = list(stacking = "percent")) %>%
                 hc_xAxis(categories = dfx$name) %>%
                 hc_add_series(name= i18n$t("12-16"), data =dfx[c("n","y")]) %>%
                 hc_add_series(name= i18n$t("17-23"),data = dfx$y1 ) %>%
                 hc_add_series(name= i18n$t("24-29"), data =dfx$y2)#%>%
                 #hc_add_series(type= "errorbar",linkedTo = i18n$t("12-16"), data= list(c(20,60),c(20,30),c(20,40)))
-                hc_add_series(name= i18n$t("24-29"),type= "errorbar", data= map(ma[3,],.f = function(x) x+ c(-1.96,1.96)*sqrt((x/100*(1-x/100)/1000))*100))
+               # hc_add_series(name= i18n$t("24-29"),type= "errorbar", data= map(ma[3,],.f = function(x) x+ c(-1.96,1.96)*sqrt((x/100*(1-x/100)/1000))*100))
             
           
         }
         
-        else if (input$test == i18n_r()$t("Gender") & input$thema == i18n_r()$t("Identity")) {
+        else if (input$test == i18n_r()$t("Gender") & input$thema == i18n_r()$t("2020")) {
             
             hc %>% 
                 hc_title(text = "Percentage of answers “One or more days” according to substance consumption in the previous 30 days by gender.")%>%
@@ -537,7 +603,7 @@ server <- function(input, output,session) {
     
     # Observe for third topic update of inputselections
     observeEvent(input$thema, {
-        if (input$thema == i18n_r()$t("Political Participation")) {
+        if (input$thema == i18n_r()$t("Diff ")) {
             updateRadioGroupButtons(session,"test",label = i18n_r()$t("Sociodemographic"),size = "normal",choices = i18n_r()$t(c("None","Migration")))
         } 
         else {
@@ -551,7 +617,8 @@ server <- function(input, output,session) {
         i18n
     })
     observe({  #reactive update for labels
-        updateRadioGroupButtons(session,"thema",label = i18n_r()$t("Theme"),size = "normal",choices = i18n_r()$t(c("Identity","Political Interest","Political Participation")))
+      #Achtung. translate rbaucht einer übersetzung in den radiobuttons, ansonsten spinnt der abru der hcs.
+        updateRadioGroupButtons(session,"thema",label = i18n_r()$t("Theme"),size = "normal",choices = i18n_r()$t(c("2020","2019","Diff ")))
     })
     
     

@@ -72,8 +72,23 @@ yac_grepl <- yac_grepl[!duplicated(yac_grepl$fr),]
 yac_grepl <- yac_grepl[!duplicated(yac_grepl$lux),]
 yac_grepl <- yac_grepl[!duplicated(yac_grepl$pt),]
 
-yac_list <- list("languages" = c("de","en","fr","lux","pt"), "translation" = yac_grepl) 
+yac_list <- list("languages" = c("en","de","fr","lux","pt"), "translation" = yac_grepl) 
 jsonlite::write_json(yac_list, "translationYAC.json")
+
+
+#allgemeine translation file erstellen
+
+trans <- read_csv("translation_en.csv")
+
+p_load(editData)
+tans <- editData(tans)
+trans <- tans
+
+#trans <- tans %>% mutate(fr = "test")
+trans <- list("languages" = c("en","de","fr"), "translation" = trans) 
+
+jsonlite::write_json(trans, "translation_general.json")
+
 
 
 # Test table reporting ----------------------------------------------------
