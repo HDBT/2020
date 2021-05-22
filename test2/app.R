@@ -6,7 +6,8 @@ hc_base <- highchart() %>%
   hc_xAxis(categories = citytemp$month) %>% 
   hc_add_series(name = "Tokyo", data = citytemp$tokyo) 
 
-ui <- fluidPage(
+ui <- fluidPage(                                        prettyToggle(inputId = "switch1",label_on ="e", label_off = "k", icon_on = icon("thumbs-up"),icon_off = icon("thumbs-down") ),
+
   h2("Viewer"),
   fluidRow(
     h3(""), highchartOutput("hc_1", width = "100%", height = "800px"),

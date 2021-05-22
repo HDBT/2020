@@ -1,56 +1,74 @@
-library("shiny")
-library("highcharter")
+# Only run examples in interactive R sessions
 
-ui <- shinyUI(
-    fluidPage(
-        column(width = 8, div(highchartOutput("hcontainer", height = "500px"),style = "font-size: 10%")),
-        column(width = 4, textOutput("text"))
-    )
-)
-
-server <- function(input, output,session) {      
-    
-    a <- data.frame(b = LETTERS[1:10], b_alt = LETTERS[11:20], c = 11:20, d = 21:30, e = 31:40)
-    
-    output$hcontainer <- renderHighchart({      
-        
-        canvasClickFunction <- JS("function(event) {Shiny.onInputChange('canvasClicked', [this.name, event.point.category]);}")
-        legendClickFunction <- JS("function(event) {Shiny.onInputChange('legendClicked', this.name);}")
-        
-        highchart(elementId = "54") %>% 
-            hc_xAxis(categories = a$b) %>% 
-            hc_add_series(name = "c", data = a$c) %>%
-            hc_add_series(name = "d", data = a$d) %>% 
-            hc_add_series(style = list('<span style="font-size:100px"></span>'),name = "e", data = a$e) %>%
-            hc_title(text = "if")%>%
-            hc_plotOptions(series = list(stacking = FALSE, events = list(click = canvasClickFunction, legendItemClick = legendClickFunction))) %>%
-            hc_chart(type = "column")
-        
-    })      
-    
-    makeReactiveBinding("outputText")
-    
-    observeEvent(input$canvasClicked, {
-        outputText <<- paste0("You clicked on series ", input$canvasClicked[1], " and the bar you clicked was from category ", input$canvasClicked[2], ".") 
-    })
-    
-    observeEvent(input$legendClicked, {
-        outputText <<- paste0("You clicked into the legend and selected series ", input$legendClicked, ".")
-    })
-    
-    output$text <- renderText({
-        outputText      
-    })
-    observe({
-    session$sendCustomMessage(
-        type = "updateHighchart", 
-        message = list(
-            # Name of chart to update
-            # Smoothed value (average of last 10)
-            y1 = NULL
-            )
-        ) sliderInput()
-    })
+    library(shiny)
+    library(editData)
+    library(jsonlite)
+    library(shinyjs)
+    library(googlesheets4)
+    # define js function for opening urls in new tab/window
+    js_code <- "
+shinyjs.browseURL = function(url) {
+  window.open(url,'_blank');
 }
+"
+    
+  gs <-  "https://docs.google.com/spreadsheets/d/1__BIT475NLesFhRhsQJwi5_1srPFG7dOkSiehemhi_w"
 
-shinyApp(ui, server) 
+    # plumber
+    ui=fluidPage(  useShinyjs(),
+                   extendShinyjs(text = js_code, functions = 'browseURL'),
+                   
+        tags$head(tags$style(HTML('#editableDT-edit {background-color:white}'))),
+        tags$head(tags$style(HTML('#editableDT-deleteAll {display:none}'))),
+        tags$head(tags$style(HTML('#editableDT-insert {display:none}'))),
+        tags$head(tags$style(HTML('#editableDT-reset {display:none}'))),
+        hr(),
+        editableDTUI("editableDT"),downloadButton("downloadjson", "Download JSON"),
+        actionButton("browse", "HTML Editor"),
+        hr(),
+        verbatimTextOutput("test"),
+        actionButton("action", "Speichern", icon = icon("save"), style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+    )
+    server=function(input,output,session){
+      googlesheets4::gs4_deauth()
+      
+       gs_data <-  read_sheet(gs)
+      
+        data=reactive({
+            readRDS("mydata.RDS")
+        })
+        observeEvent(input$select,{
+            updateTextInput(session,"mydata",value=input$select)
+        })
+        result=callModule(editableDT,"editableDT",data= data)
+        output$test=renderPrint({
+            timestamp<- readRDS("timestamp.RDS")
+            paste("Last saved on", timestamp)
+        })
+        observeEvent(input$action,{
+           timestamp <-  timestamp()
+           saveRDS(timestamp, "timestamp.RDS")
+           
+         data    <- result()
+        saveRDS(data, "mydata.RDS")
+        df0 %>% 
+          sheet_write(gs)
+        })
+        observeEvent(input$browse,{
+                             js$browseURL("https://onlinehtmleditor.dev")
+        } 
+        )
+        
+        output$downloadjson <- downloadHandler(filename = function() {
+            "translation_general.json"
+        }, content = function(file) {
+            data    <- result()
+            trans <- list("languages" = c("en","de","fr"), "translation" = data)
+            jsonlite::write_json(trans, file)
+        })
+        #jsonlite::write_json(data, "translation_general_neu.json")
+
+        
+    }
+
+    shinyApp(ui = ui, server = server)
