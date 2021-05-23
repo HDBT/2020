@@ -11,9 +11,12 @@ shinyjs.browseURL = function(url) {
   window.open(url,'_blank');
 }
 "
-    
-  gs <-  "https://docs.google.com/spreadsheets/d/1__BIT475NLesFhRhsQJwi5_1srPFG7dOkSiehemhi_w"
 
+  
+   
+
+   data <- as.data.frame(x= 1:3)
+   #save_data_gsheets(df019)
     # plumber
     ui=fluidPage(  useShinyjs(),
                    extendShinyjs(text = js_code, functions = 'browseURL'),
@@ -30,12 +33,24 @@ shinyjs.browseURL = function(url) {
         actionButton("action", "Speichern", icon = icon("save"), style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
     )
     server=function(input,output,session){
-      googlesheets4::gs4_deauth()
+
+      sheetid <- "1__BIT475NLesFhRhsQJwi5_1srPFG7dOkSiehemhi_w"
+      save_data_gsheets <- function(data) {
+        data <- data %>% as.list() %>% data.frame()
+        googlesheets4::sheet_write(sheet = "Tabellenblatt1",ss = sheetid, data = data)
+      }
+    
+      load_data_gsheets <- function() {
+        gs4_auth(path = "able-math-198615-c979755ea451.json")
+        
+        read_sheet(sheetid)
+      }
       
-       gs_data <-  read_sheet(gs)
       
         data=reactive({
-            readRDS("mydata.RDS")
+          load_data_gsheets()
+          #as.data.frame(read_sheet(sheetid))
+         #class(readRDS("mydata.RDS"))
         })
         observeEvent(input$select,{
             updateTextInput(session,"mydata",value=input$select)
@@ -50,9 +65,11 @@ shinyjs.browseURL = function(url) {
            saveRDS(timestamp, "timestamp.RDS")
            
          data    <- result()
-        saveRDS(data, "mydata.RDS")
-        df0 %>% 
-          sheet_write(gs)
+       # saveRDS(data, "mydata.RDS")
+        gs4_auth(path = "able-math-198615-c979755ea451.json")
+        
+        save_data_gsheets(data)
+        
         })
         observeEvent(input$browse,{
                              js$browseURL("https://onlinehtmleditor.dev")
