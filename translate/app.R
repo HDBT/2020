@@ -81,7 +81,7 @@ shinyjs.browseURL = function(url) {
         }, content = function(file) {
             data    <- result()
             trans <- list("languages" = c("en","de","fr"), "translation" = data)
-            jsonlite::write_json(trans, file)
+            jsonlite::write_json(trans,path = file)
         })
         #jsonlite::write_json(data, "translation_general_neu.json")
 

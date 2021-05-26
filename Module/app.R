@@ -29,9 +29,9 @@ i18n <- Translator$new(translation_json_path = "../Module/translation.json")
 i18n$set_translation_language('en')
 
 #library(shinyjs)
-library(dplyr)
+
 #library(data.table)
-library(highcharter)
+
 #write.csv(df,"df.csv")
 options(shiny.reactlog = T)
 #options(shiny.error = browser)
@@ -87,8 +87,18 @@ script <- '
 ui <- fluidPage(#theme = "bootstrap.css",
     useShinyjs(),
 
-    tags$style(".fa-chart-bar {background-color:#666666 !important}"), #funzt 
-    tags$style(".fa-bars {background-color:#666666 !important}"), #funz
+    tags$style(".fa-chart-bar {color: #666666!important}"), #funzt 
+    tags$style(".fa-bars { color: #666666 !important}"), #funz  !!! <- nicht durch ; trennen 
+    tags$style(HTML(".state {font-size: 28px !important}")), #funz
+    tags$style(HTML("i { display: inline-block;
+  color: white;
+  border-radius: 4px;
+  padding: 0.3em; /* adjust padding */
+  line-height: initial !important; /* reset line-height */
+  height: 1em;
+  width: 1em;
+  text-align:center;
+  }")), #funz nicht
     #tags$style("#shadow_row_1:focus {box-shadow: inset 0 0 0 2em var(--hover);}"), #funz nicht
     tags$head(tags$script(' document.getElementById("Clicked").onclick = function() { Shiny.onInputChange("Clicked", NULL); }; ')), #?
     tags$script('     $(document).on("keypress", function (e) { Shiny.onInputChange("mydata", e.which);     });   '),
@@ -102,12 +112,13 @@ ui <- fluidPage(#theme = "bootstrap.css",
     fluidRow(id ="first",shiny.i18n::usei18n(i18n),
              extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('.Clicked', 'null'); }", functions = c()),
              
-             column(12,          
+             column(12,      
+        
                     flipBoxN(front_btn_text = "Data basis and methodology",
                              id = 1,
                              main_img = NULL,
                              header_img = NULL  ,
-                             back_content  = tagList(column(12,tags$body(HTML('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
+                             back_content  = tagList(column(12,tags$body(i18n$t(HTML('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
 <p style="text-align: justify;">The Youth Survey Luxembourg is a representative, large-scale survey of Luxembourg residents.</p>
 <p style="text-align: justify;">The target population of the Youth Survey Luxembourg 2019 is comprised of residents of Luxembourg who are 16&ndash;29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duch&eacute; de Luxembourg (STATEC) was used for sampling and weighting calculations for the Youth Survey Luxembourg.</p>
 <h4 class="LC20lb DKV0Md" style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/yac-plus/"> Young People and COVID-19 (YAC+)</a></h4>
@@ -119,9 +130,9 @@ ui <- fluidPage(#theme = "bootstrap.css",
 <p style="text-align: justify;">These standardized surveys will be supplemented by qualitative interviews to gain a deeper understanding of the situation and subjective evaluations of adolescents and young adults.</p>
 </div>
 </div>
-</div>')))) #"The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg."
+</div>'))))) #"The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg."
                              ,
-                             radioGroupButtons("thema",i18n$t("Year"), choiceNames = c("2019","2020","Diff"),choiceValues = c("2019","2020","Diff"), size = "normal",direction = "horizontal"),
+                             radioGroupButtons("thema",i18n$t("Year"), choiceNames = c("2019","2020","Differences"),choiceValues = c("2019","2020","Differences"), size = "normal",direction = "horizontal"),
                              fluidRow(
                                  column(2,
                                         fluidRow(
@@ -135,34 +146,57 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                  ),
                                  
                                  bsTooltip("switch", "Switch between horizontal and vertical orientation","left", options = list(container = "body")), #notwendig, um serveritig laufen zu lassen
-                                 setShadow(id = "shadow_row_0"), #switch
-                                 setShadow(id = "shadow_row_1"), #switch
+                                 #setShadow(id = "shadow_row_0"), #switch
+                                 #setShadow(id = "shadow_row_1"), #switch
                                  column(10,
                                         div(highchartOutput("hcchart1"), style = "font-size:15%"),
                                         #actionButton("mybutton", "action"),
                                           tags$style(HTML("#lang_div .shiny-input-container  {font-size: 16px;}")),  #individuelles style setzen indem man eine eigens erstellte id anspricht
                                           div(id ="lang_div", #prettySwitch(inputId = "switch","Spaltendiagramm",slim = T, value = TRUE),#div() um eigene ID zu setzen fürs ansprechen (individuelle style tags z.b.)
                                               tags$span(shiny::tags$button(id = paste0("btn-", 1, "-front"), class = "btn btn-primary btn-rotate navitem",style = "float: center;",shiny::tags$i(class = "fa fa-long-arrow-right"), "Data basis and methodology")),
-                                              tags$span(  
-                                                  style='float: right;width: 100px;',
-                                        dropdown(style = "unite",icon = icon("gear"), inline = TRUE, right = TRUE,
-                                                 status = "danger", 
-                                                 tooltip = tooltipOptions(placement = "left",title= "Options"),
-                                                 tags$div(  
-                                                   
-                                                   style='float: right;width: 100px;',
-                                                  prettyToggle(inputId = "switch", label_on = "", label_off = "",inline = TRUE,value = TRUE, bigger = TRUE,fill = FALSE,outline= FALSE,icon_off = icon("bars"),icon_on = icon("chart-bar")),
-                                                  tags$hr(style="border-color: black;"),
-                                                  selectInput(
-                                                      inputId='selected_language',
-                                                      label=i18n$t('Change language'),
-                                                      choices = c("English" = "en", "Deutsch" = "de", "Français" = "fr"),
-                                                      selected = i18n$get_key_translation()
-                                                  )
-                                                  )
-                                              )                                        
-
-                                          )
+                                              tags$span(style='float: left; width:20%; bottom: 200;',prettyToggle(plain = TRUE,inputId = "switch",shape = "curve", label_on = "", label_off = "",inline = FALSE,value = TRUE, bigger = FALSE,fill = FALSE,outline= TRUE,icon_off = icon("bars"),icon_on = icon("chart-bar"))),
+                                              
+                                              
+                                              
+                                              # 
+                                              # radioGroupButtons(
+                                              #   inputId = "Id069",
+                                              #   label = "Choose a graph :", 
+                                              #   choices = c(`<i class='fa fa-bar-chart'></i>` = "bar", `<i class='fa fa-line-chart'></i>` = "line", 
+                                              #               `<i class='fa fa-pie-chart'></i>` = "pie"),
+                                              #   justified = TRUE
+                                              # ),
+                                              # 
+                                              # 
+                                              
+                                              tags$span(style='float: right; bottom: 200;',
+                                                        selectInput(width = 105,
+                                                inputId='selected_language',
+                                                label= NULL,
+                                                choices = c("English" = "en", "Deutsch" = "de", "Français" = "fr"),
+                                                selected = i18n$get_key_translation()
+                                              ) )
+                                              #,
+                                        #       tags$span(  
+                                        #           style='float: right;width: 100px;',                                                  
+                                        # 
+                                        # dropdown(style = "unite",icon = icon("gear"), inline = TRUE, right = TRUE,
+                                        #          status = "danger", 
+                                        #          tooltip = tooltipOptions(placement = "left",title= "Options"),
+                                        #          tags$div(  
+                                        #            
+                                        #            style='float: right;width: 100px;',
+                                        #           tags$hr(style="border-color: black;"),
+                                        #           selectInput(
+                                        #               inputId='selected_language',
+                                        #               label=i18n$t('Change language'),
+                                        #               choices = c("English" = "en", "Deutsch" = "de", "Français" = "fr"),
+                                        #               selected = i18n$get_key_translation()
+                                        #           )
+                                        #           )
+                                        #       )                                        
+                                        # 
+                                        #   )
                                         ),
                                         
                                  ),      
@@ -192,6 +226,13 @@ server <- function(input, output,session) {
      $('#thema').find('.btn-group > .btn-group-toggle').attr('id', function(i) {",
     "return 'thema_row_' + i})
 
+document.querySelectorAll('button.action').forEach(button =>
+    button.addEventListener('click', e =>
+        chart.exportChart({
+            scale: 5
+        })
+    )
+);
     ")
   
   # add_id_js <- paste0(
@@ -201,17 +242,17 @@ server <- function(input, output,session) {
 
   
   ## once the UI is loaded, call JS function and attach popover to it. For dependency loading one call has to come from UI. e.g. bstootltips ------------
+  
   session$onFlushed(function() {
     runjs(add_id_js)
     addPopover(session,"test_row_1",NULL,'<p style="text-align: justify;"><strong>Age</strong>&nbsp;- While the Youth Survey Luxembourg 2019 has asked 16-29 year old people residing in Luxembourg, the YAC+ survey 2020, which is an additional survey based on the Youth Survey Luxembourg, has surveyed 12-29-year olds.</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body")) #quotesign trick, cuz fked up package
     addPopover(session,"test_row_2",NULL,'<p style="text-align: justify;"><strong>Gender </strong>&ndash; The Youth Survey Luxembourg offers their respondents the possibility to define their gender apart from the binary CIS-categories of male and female. However, the number of answers was too small to be able to conduct statistically sound analyses</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
     addPopover(session,"test_row_3",NULL,'<p style="text-align: justify;"><strong>Status</strong>&ndash; NEET is the acronym for &lsquo;not in education, employment or training&rsquo;. This entails every respondent of the Youth Survey who solely answered to be either unemployed and looking for work (unemployed) or unemployed and not looking work (economically inactive). Meaning that every respondent who, at the time of the survey, declared that they are either in education, employment or training and who were a pupil, apprentice or student, were excluded from the NEET category.</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
-    addPopover(session,"thema_row_0",NULL,'<p style="text-align: justify;"><strong>2019</strong>&ndash; Youth Survey Luxembourg</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
-    addPopover(session,"thema_row_1",NULL,'<p style="text-align: justify;"><strong>2020</strong>&ndash; YAC+</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
-    addPopover(session,"thema_row_2",NULL,'<p style="text-align: justify;"><strong>Differences</strong>&ndash; </p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
+    addPopover(session,"thema_row_0",NULL,'<p style="text-align: justify;"><strong>2019 </strong>&ndash; Youth Survey Luxembourg</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
+    addPopover(session,"thema_row_1",NULL,'<p style="text-align: justify;"><strong>2020 </strong>&ndash; YAC+</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
+    addPopover(session,"thema_row_2",NULL,'<p style="text-align: justify;"><strong>Differences </strong>&ndash; </p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
 
   }, once = FALSE)
-
   # export -------
   export <- function() {
     
@@ -220,24 +261,25 @@ server <- function(input, output,session) {
         list(text=i18n_r()$t("Download PNG image"),
              onclick=JS("function () { 
                       this.exportChart({ type: 'image/png' }); }")),
-        list(text="Download JPEG image",
+        list(text=i18n_r()$t("Download JPEG image"),
              onclick=JS("function () { 
                       this.exportChart({ type: 'image/jpeg' }); }")),
-        list(text="Download SVG vector image",
+        list(text=i18n_r()$t("Download SVG vector image"),
              onclick=JS("function () { 
                       this.exportChart({ type: 'image/svg+xml' }); }")),
-        list(text="Download PDF document",
+        list(text=i18n_r()$t("Download PDF document"),
              onclick=JS("function () { 
                       this.exportChart({ type: 'application/pdf' }); }")),
         list(separator=TRUE),
-        list(text="Download CSV document",
+        list(text=i18n_r()$t("Download CSV file"),
              onclick=JS("function () { this.downloadCSV(); }")),
-        list(text="Download XLS document",
+        list(text=i18n_r()$t("Download XLS file"),
              onclick=JS("function () { this.downloadXLS(); }"))
         
       )
   }
  
+  
      hover <- JS("function() {
      var chart = this
         this.title.on('mouseover', e => {
@@ -312,11 +354,16 @@ server <- function(input, output,session) {
         }  
         if (input$thema == i18n_r()$t("2019") ){
           subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593"
-        }else{
+        } 
+        else if (input$thema == i18n_r()$t("Differences")) {
+          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 & Young People and COVID-19 2020, n = 4189"
           
-          subtitle <- "Source: Youth Survey Luxembourg 2020, n = 4189"
         }
-        hc <-   highchart() %>%
+        else{
+          
+          subtitle <- "Source: Young People and COVID-19 2020, n = 4189"
+        }
+        hc <-   highchart() %>%   #hc_opts = list(lang = list(contextButtonTitle = "Chart Download"))
             hc_xAxis(labels = list(style = list(fontSize = "16px"))) %>% 
             hc_yAxis(labels= list(format = "{value} %", style = list(fontSize = "16px"))) %>%
             hc_chart(type = switch, events = list(load = hover))%>%
@@ -479,8 +526,8 @@ server <- function(input, output,session) {
 
        
         
-        #Diff
-        else if (input$test == i18n_r()$t("None") & input$thema == i18n_r()$t("Diff")) {
+        #Differences
+        else if (input$test == i18n_r()$t("None") & input$thema == i18n_r()$t("Differences")) {
           #dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
           
           hc %>%
@@ -495,7 +542,7 @@ server <- function(input, output,session) {
             hc_xAxis(categories = i18n$t(as.character(df0$Var1)) )#, title = list(text = "Konsum"))
           
         }
-        else if (input$test == i18n_r()$t("Age") & input$thema == i18n_r()$t("Diff")) { #vorher MIgration
+        else if (input$test == i18n_r()$t("Age") & input$thema == i18n_r()$t("Differences")) { #vorher MIgration
           
           
           hc %>%
@@ -508,7 +555,7 @@ server <- function(input, output,session) {
             hc_xAxis(categories = i18n$t(as.character(df_age$Var1[order(df_age$Var2)])))
           
         }
-        else if (input$test == i18n_r()$t("Gender") & input$thema == i18n_r()$t("Diff")) {
+        else if (input$test == i18n_r()$t("Gender") & input$thema == i18n_r()$t("Differences")) {
           
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by gender."))%>%
@@ -520,7 +567,7 @@ server <- function(input, output,session) {
           
         }
         
-        else if (input$test == i18n_r()$t("Status") & input$thema == i18n_r()$t("Diff")) {
+        else if (input$test == i18n_r()$t("Status") & input$thema == i18n_r()$t("Differences")) {
           
           hc %>%
 
@@ -638,7 +685,7 @@ server <- function(input, output,session) {
     #sorgt fuer die hakeligen resets bei Theme aenderung.
     # Observe for third topic update of inputselections
     # observeEvent(input$thema, {
-    #     if (input$thema == i18n_r()$t("Diff ")) {
+    #     if (input$thema == i18n_r()$t("Differences ")) {
     #         updateRadioGroupButtons(session,"test",label = i18n_r()$t("Sociodemographic"),size = "normal",choices = i18n_r()$t(c("None","Migration")))
     #     } 
     #     else {
@@ -651,7 +698,7 @@ server <- function(input, output,session) {
 
     observe({  #reactive update for labels
       #Achtung. translate rbaucht einer übersetzung in den radiobuttons, ansonsten spinnt der abru der hcs.
-        updateRadioGroupButtons(session,"thema",label = i18n_r()$t("Year"),size = "normal",choices = i18n_r()$t(c("2019","2020","Diff")))
+        updateRadioGroupButtons(session,"thema",label = i18n_r()$t("Year"),size = "normal",choices = i18n_r()$t(c("2019","2020","Differences")))
     })
     
     observe({  #reactive update for labels
