@@ -37,11 +37,11 @@ options(shiny.reactlog = T)
 #options(shiny.error = browser)
 #install.packages("shinycustomloader")
 # For dropdown menu #useless?
-get(load("data.RData",envir = .GlobalEnv))
-get(load("data19.RData",envir = .GlobalEnv))
-get(load("data19_Diff.RData",envir = .GlobalEnv))
-get(load("data20_Diff.RData",envir = .GlobalEnv))
-get(load("data20_full.RData",envir = .GlobalEnv))
+load("data.RData",envir = .GlobalEnv)
+load("data19.RData",envir = .GlobalEnv)
+load("data19_Diff.RData",envir = .GlobalEnv)
+load("data20_Diff.RData",envir = .GlobalEnv)
+load("data20_full.RData",envir = .GlobalEnv)
 
 actionLink <- function(inputId, ...) {
     tags$a(href='javascript:void',
@@ -80,45 +80,32 @@ script <- '
 '
 
 
+css_style <-  tagList(  
+                tags$style(".fa-chart-bar {color: #666666!important}"), #funzt 
+                tags$style(".fa-bars { color: #666666 !important}"), #funz  !!! <- nicht durch ; trennen 
+                tags$style(HTML(".state {font-size: 28px !important}")), #funz
+                tags$style(HTML("i { display: inline-block;
+                  color: white;
+                  border-radius: 4px;
+                  padding: 0.3em; /* adjust padding */
+                  line-height: initial !important; /* reset line-height */
+                  height: 1em;
+                  width: 1em;
+                  text-align:center;
+                  }")), #funz nicht
+                #tags$style("#shadow_row_1:focus {box-shadow: inset 0 0 0 2em var(--hover);}"), #funz nicht
+                tags$head(tags$script(' document.getElementById("Clicked").onclick = function() { Shiny.onInputChange("Clicked", NULL); }; ')), #?
+                tags$script('     $(document).on("keypress", function (e) { Shiny.onInputChange("mydata", e.which);     });   '),
+                tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "css.css")),
+                tags$head(tags$style(HTML('* {font-family: "helvetica" };'))), # * um jedes Element zu selektieren. !important um  optionen in den Kasaden zu überschreiben
+                tags$head(tags$style(HTML(".shiny-input-container { font-size: 18px; }"))), #funzt
+                tags$head(tags$style(HTML(".selected {color:#16A085;}"))), #funzt nicht
+                tags$head(tags$style(HTML(".tooltip-inner {  text-align: center;    font-size: 14px;};"))), #funzt 
+                
+                tags$head(tags$style(HTML(".highcharts-input-container { font-size: 60px; }"))) #funzt nicht
+)
 
-# sprache -----------------------------------------------------------------
-
-# UI
-ui <- fluidPage(#theme = "bootstrap.css",
-    useShinyjs(),
-
-    tags$style(".fa-chart-bar {color: #666666!important}"), #funzt 
-    tags$style(".fa-bars { color: #666666 !important}"), #funz  !!! <- nicht durch ; trennen 
-    tags$style(HTML(".state {font-size: 28px !important}")), #funz
-    tags$style(HTML("i { display: inline-block;
-  color: white;
-  border-radius: 4px;
-  padding: 0.3em; /* adjust padding */
-  line-height: initial !important; /* reset line-height */
-  height: 1em;
-  width: 1em;
-  text-align:center;
-  }")), #funz nicht
-    #tags$style("#shadow_row_1:focus {box-shadow: inset 0 0 0 2em var(--hover);}"), #funz nicht
-    tags$head(tags$script(' document.getElementById("Clicked").onclick = function() { Shiny.onInputChange("Clicked", NULL); }; ')), #?
-    tags$script('     $(document).on("keypress", function (e) { Shiny.onInputChange("mydata", e.which);     });   '),
-    tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "css.css")),
-    tags$head(tags$style(HTML('* {font-family: "helvetica" };'))), # * um jedes Element zu selektieren. !important um  optionen in den Kasaden zu überschreiben
-    tags$head(tags$style(HTML(".shiny-input-container { font-size: 18px; }"))), #funzt
-    tags$head(tags$style(HTML(".selected {color:#16A085;}"))), #funzt nicht
-    tags$head(tags$style(HTML(".tooltip-inner {  text-align: center;    font-size: 14px;};"))), #funzt 
-    
-    tags$head(tags$style(HTML(".highcharts-input-container { font-size: 60px; }"))), #funzt nicht
-    fluidRow(id ="first",shiny.i18n::usei18n(i18n),
-             extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('.Clicked', 'null'); }", functions = c()),
-             
-             column(12,      
-        
-                    flipBoxN(front_btn_text = "Data basis and methodology",
-                             id = 1,
-                             main_img = NULL,
-                             header_img = NULL  ,
-                             back_content  = tagList(column(12,tags$body(i18n$t(HTML('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
+back_content <- tagList(column(12,tags$body(i18n$t(HTML('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
 <p style="text-align: justify;">The Youth Survey Luxembourg is a representative, large-scale survey of Luxembourg residents.</p>
 <p style="text-align: justify;">The target population of the Youth Survey Luxembourg 2019 is comprised of residents of Luxembourg who are 16&ndash;29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duch&eacute; de Luxembourg (STATEC) was used for sampling and weighting calculations for the Youth Survey Luxembourg.</p>
 <h4 class="LC20lb DKV0Md" style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/yac-plus/"> Young People and COVID-19 (YAC+)</a></h4>
@@ -131,6 +118,45 @@ ui <- fluidPage(#theme = "bootstrap.css",
 </div>
 </div>
 </div>'))))) #"The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg."
+
+
+Download = JS("
+                  Highcharts.SVGRenderer.prototype.symbols.download = function (x, y, w, h) {
+    var path = [
+        // Arrow stem
+        'M', x + w * 0.5, y,
+        'L', x + w * 0.5, y + h * 0.7,
+        // Arrow head
+        'M', x + w * 0.3, y + h * 0.5,
+        'L', x + w * 0.5, y + h * 0.7,
+        'L', x + w * 0.7, y + h * 0.5,
+        // Box
+        'M', x, y + h * 0.9,
+        'L', x, y + h,
+        'L', x + w, y + h,
+        'L', x + w, y + h * 0.9
+    ];
+    return path;
+};   ")
+
+
+# sprache -----------------------------------------------------------------
+
+# UI
+ui <- fluidPage(#theme = "bootstrap.css",
+    useShinyjs(),
+    css_style,
+    fluidRow(id ="first",
+             shiny.i18n::usei18n(i18n),#notwendig für  rendering on UI side
+             extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('.Clicked', 'null'); }", functions = c()), #why?
+             
+             column(12,      
+        
+                    flipBoxN(front_btn_text = "Data basis and methodology",
+                             id = 1,
+                             main_img = NULL,
+                             header_img = NULL  ,
+                             back_content  = back_content
                              ,
                              radioGroupButtons("thema",i18n$t("Year"), choiceNames = c("2019","2020","Differences"),choiceValues = c("2019","2020","Differences"), size = "normal",direction = "horizontal"),
                              fluidRow(
@@ -305,64 +331,48 @@ document.querySelectorAll('button.action').forEach(button =>
 
       }")
     
-    Download = JS("
-                  Highcharts.SVGRenderer.prototype.symbols.download = function (x, y, w, h) {
-    var path = [
-        // Arrow stem
-        'M', x + w * 0.5, y,
-        'L', x + w * 0.5, y + h * 0.7,
-        // Arrow head
-        'M', x + w * 0.3, y + h * 0.5,
-        'L', x + w * 0.5, y + h * 0.7,
-        'L', x + w * 0.7, y + h * 0.5,
-        // Box
-        'M', x, y + h * 0.9,
-        'L', x, y + h,
-        'L', x + w, y + h,
-        'L', x + w, y + h * 0.9
-    ];
-    return path;
-};   ")
-    
+
     runjs(Download)
     
     ClickFunction <-  JS("function(event) {var rr = event.point.index; var rr = {rr, '.nonce': Math.random()};Shiny.onInputChange('Clicked',rr);}")
     #ClickFunction <-  JS("function(event) {Shiny.onInputChange('Clicked',event.point.index);}")
     colors <- c("#e41618","#52bde7","#4d4d52","#90b36d","#f5951f","#6f4b89","#3fb54e","#eea4d8")
     #source("module_global.R")
+    #switch proxy für charttype
+    if (input$switch == T)
+    {switch <-"column"
+    } else { switch <- "bar"
+    }  
+    if (input$thema == i18n_r()$t("2019") ){
+      subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593"
+    } 
+    else if (input$thema == i18n_r()$t("Differences")) {
+      subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 & Young People and COVID-19 2020, n = 4189"
+      
+    }
+    else{
+      
+      subtitle <- "Source: Young People and COVID-19 2020, n = 4189"
+    }
     # Tab2 Vis ----------------------------------------------------------------
     output$hcchart1 <- renderHighchart({
-        #switch proxy für charttype
-        
-        dfn <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = asc )
-        dfx <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = ma[1,], y1 = ma[2,],y2= ma[3,],y3= ma[4,], n = c("9","8","1") )
-        df3 <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = mg[1,], y1 = mg[2,])
-        df2 <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = ms[1,], y1 = ms[2,],y2= ms[3,])
+       # only relevant for old method
+        # dfn <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = asc )
+        # dfx <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = ma[1,], y1 = ma[2,],y2= ma[3,],y3= ma[4,], n = c("9","8","1") )
+        # df3 <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = mg[1,], y1 = mg[2,])
+        # df2 <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = ms[1,], y1 = ms[2,],y2= ms[3,])
+        # 
+        # df_l  <- lst(dfn,dfx) 
+        # print(head(df_l))
+        # l2<-lapply(df_l, function(df) 
+        #     cbind(df, b = df$y *1.1, c = df$y *1.2, d = df$y *0.7))
         
         #uebersetzung hier noetig, da das Dataframe format nicht wie vorher zerlegt ist
         df_gender <- df_gender %>% mutate(Var2 = i18n$t(as.character(Var2)))
         df_status <- df_status %>% mutate(Var2 = i18n$t(as.character(Var2)))
           
 
-        df_l  <- lst(dfn,dfx)
-        print(head(df_l))
-        l2<-lapply(df_l, function(df) 
-            cbind(df, b = df$y *1.1, c = df$y *1.2, d = df$y *0.7))
-        if (input$switch == T)
-        {switch <-"column"
-        } else { switch <- "bar"
-        }  
-        if (input$thema == i18n_r()$t("2019") ){
-          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593"
-        } 
-        else if (input$thema == i18n_r()$t("Differences")) {
-          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 & Young People and COVID-19 2020, n = 4189"
-          
-        }
-        else{
-          
-          subtitle <- "Source: Young People and COVID-19 2020, n = 4189"
-        }
+        
         hc <-   highchart() %>%   #hc_opts = list(lang = list(contextButtonTitle = "Chart Download"))
             hc_xAxis(labels = list(style = list(fontSize = "16px"))) %>% 
             hc_yAxis(labels= list(format = "{value} %", style = list(fontSize = "16px"))) %>%
@@ -725,7 +735,7 @@ document.querySelectorAll('button.action').forEach(button =>
       }
       print(input$mydata)
     })
-    
+    mean(df)
     
     #reactivce translations for ui buttons
     # i18n_r <- reactive({
