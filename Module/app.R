@@ -24,9 +24,9 @@ source("map.r")
 #library(plyr)
 library(shiny.i18n) #dev version wegen google probs
 
-i18n <- Translator$new(translation_json_path = "../Module/translation.json")
+i18n <- Translator$new(translation_json_path = "translation.json")
 #i18n <- Translator$new(automatic = TRUE)
-i18n$set_translation_language('en')
+i18n$set_translation_language('de')
 
 #library(shinyjs)
 
@@ -81,8 +81,8 @@ script <- '
 
 
 css_style <-  tagList(  
-                tags$style(".fa-chart-bar {color: #666666!important}"), #funzt 
-                tags$style(".fa-bars { color: #666666 !important}"), #funz  !!! <- nicht durch ; trennen 
+                tags$style(".fa-chart-bar,.fa-bars{color: #666666!important}"), #funzt 
+                tags$style(".pretty:hover, .selectize-input:hover {background: #e6e6e6;color: #666666!important}"), #funzt 
                 tags$style(HTML(".state {font-size: 28px !important}")), #funz
                 tags$style(HTML("i { display: inline-block;
                   color: white;
@@ -105,7 +105,9 @@ css_style <-  tagList(
                 tags$head(tags$style(HTML(".highcharts-input-container { font-size: 60px; }"))) #funzt nicht
 )
 
-back_content <- tagList(column(12,tags$body(i18n$t(HTML('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
+
+  
+back_content <- tagList(column(12,tags$body(HTML(i18n$t('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
 <p style="text-align: justify;">The Youth Survey Luxembourg is a representative, large-scale survey of Luxembourg residents.</p>
 <p style="text-align: justify;">The target population of the Youth Survey Luxembourg 2019 is comprised of residents of Luxembourg who are 16&ndash;29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duch&eacute; de Luxembourg (STATEC) was used for sampling and weighting calculations for the Youth Survey Luxembourg.</p>
 <h4 class="LC20lb DKV0Md" style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/yac-plus/"> Young People and COVID-19 (YAC+)</a></h4>
@@ -140,25 +142,38 @@ Download = JS("
 };   ")
 
 
-# sprache -----------------------------------------------------------------
 
-# UI
+
+# UI--------------------------
 ui <- fluidPage(#theme = "bootstrap.css",
+  shiny.i18n::usei18n(i18n),#notwendig für  rendering on UI side
+  singleton(tags$head(tags$script(src = "pop_patch.js"))),
+  
     useShinyjs(),
     css_style,
     fluidRow(id ="first",
-             shiny.i18n::usei18n(i18n),#notwendig für  rendering on UI side
-             extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('.Clicked', 'null'); }", functions = c()), #why?
-             
+             #extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('.Clicked', 'null'); }", functions = c()), #why?
              column(12,      
         
                     flipBoxN(front_btn_text = "Data basis and methodology",
                              id = 1,
                              main_img = NULL,
                              header_img = NULL  ,
-                             back_content  = back_content
+                             back_content  = tagList(column(12,tags$body(i18n$t('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
+<p style="text-align: justify;">The Youth Survey Luxembourg is a representative, large-scale survey of Luxembourg residents.</p>
+<p style="text-align: justify;">The target population of the Youth Survey Luxembourg 2019 is comprised of residents of Luxembourg who are 16&ndash;29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duch&eacute; de Luxembourg (STATEC) was used for sampling and weighting calculations for the Youth Survey Luxembourg.</p>
+<h4 class="LC20lb DKV0Md" style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/yac-plus/"> Young People and COVID-19 (YAC+)</a></h4>
+<p style="text-align: justify;">To assess the situation during and after the pandemic, two surveys will be conducted in 2020 and 2021 based on the Youth Survey Luxembourg 2019 and in close collaboration with the research group of the Child and Adolescent Health Study "<a href="https://www.jugend-in-luxemburg.lu/hbsc-kooperation/">Health Behavior in School-Aged Children</a>".</p>
+<div class="elementor-element elementor-element-289e4d2 elementor-widget elementor-widget-text-editor" data-id="289e4d2" data-element_type="widget" data-widget_type="text-editor.default">
+<div class="elementor-widget-container">
+<div class="elementor-text-editor elementor-clearfix">
+<p style="text-align: justify;">For YAC+, this group will be supplemented with children and adolescents aged 12 to 16. Thus, the age group of 12 to 29 years old can be surveyed.</p>
+<p style="text-align: justify;">These standardized surveys will be supplemented by qualitative interviews to gain a deeper understanding of the situation and subjective evaluations of adolescents and young adults.</p>
+</div>
+</div>
+</div>'))))
                              ,
-                             radioGroupButtons("thema",i18n$t("Year"), choiceNames = c("2019","2020","Differences"),choiceValues = c("2019","2020","Differences"), size = "normal",direction = "horizontal"),
+                             radioGroupButtons("thema",i18n$t('Year'), choiceNames = c("2019","2020","Differences"),choiceValues = c("2019","2020","Differences"), size = "normal",direction = "horizontal"),
                              fluidRow(
                                  column(2,
                                         fluidRow(
@@ -233,7 +248,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
     )
 ) 
 
-
+# Server ------------------
 server <- function(input, output,session) {
   
   i18n_r <- reactive({
@@ -265,10 +280,8 @@ document.querySelectorAll('button.action').forEach(button =>
   #   "$('#hcchart1').find('.highcharts-container > .highcharts-root > .highcharts-subtitle').attr('id', function(i) {",
   #   "return 'test_row_' + i})")
 
-
-  
   ## once the UI is loaded, call JS function and attach popover to it. For dependency loading one call has to come from UI. e.g. bstootltips ------------
-  
+ 
   session$onFlushed(function() {
     runjs(add_id_js)
     addPopover(session,"test_row_1",NULL,'<p style="text-align: justify;"><strong>Age</strong>&nbsp;- While the Youth Survey Luxembourg 2019 has asked 16-29 year old people residing in Luxembourg, the YAC+ survey 2020, which is an additional survey based on the Youth Survey Luxembourg, has surveyed 12-29-year olds.</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body")) #quotesign trick, cuz fked up package
@@ -276,9 +289,23 @@ document.querySelectorAll('button.action').forEach(button =>
     addPopover(session,"test_row_3",NULL,'<p style="text-align: justify;"><strong>Status</strong>&ndash; NEET is the acronym for &lsquo;not in education, employment or training&rsquo;. This entails every respondent of the Youth Survey who solely answered to be either unemployed and looking for work (unemployed) or unemployed and not looking work (economically inactive). Meaning that every respondent who, at the time of the survey, declared that they are either in education, employment or training and who were a pupil, apprentice or student, were excluded from the NEET category.</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
     addPopover(session,"thema_row_0",NULL,'<p style="text-align: justify;"><strong>2019 </strong>&ndash; Youth Survey Luxembourg</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
     addPopover(session,"thema_row_1",NULL,'<p style="text-align: justify;"><strong>2020 </strong>&ndash; YAC+</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
-    addPopover(session,"thema_row_2",NULL,'<p style="text-align: justify;"><strong>Differences </strong>&ndash; </p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
 
   }, once = FALSE)
+    
+  
+  language  <- reactive({input$selected_language})
+        
+  observeEvent(language() ,{
+    
+    delay(600, #haudruff loesung
+      addPopover(session,"thema_row_2",NULL,i18n_r()$t('<p style="text-align: justify;"><strong>Differences </strong> </p>'),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"),trigger = "hover")
+  )
+  }
+    
+  )  
+    
+  
+    
   # export -------
   export <- function() {
     
@@ -338,24 +365,27 @@ document.querySelectorAll('button.action').forEach(button =>
     #ClickFunction <-  JS("function(event) {Shiny.onInputChange('Clicked',event.point.index);}")
     colors <- c("#e41618","#52bde7","#4d4d52","#90b36d","#f5951f","#6f4b89","#3fb54e","#eea4d8")
     #source("module_global.R")
-    #switch proxy für charttype
-    if (input$switch == T)
-    {switch <-"column"
-    } else { switch <- "bar"
-    }  
-    if (input$thema == i18n_r()$t("2019") ){
-      subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593"
-    } 
-    else if (input$thema == i18n_r()$t("Differences")) {
-      subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 & Young People and COVID-19 2020, n = 4189"
-      
-    }
-    else{
-      
-      subtitle <- "Source: Young People and COVID-19 2020, n = 4189"
-    }
+    
     # Tab2 Vis ----------------------------------------------------------------
     output$hcchart1 <- renderHighchart({
+
+    #switch proxy für charttype
+        if (input$switch == T)
+        {switch <-"column"
+        } else { switch <- "bar"
+        }  
+        if (input$thema == i18n_r()$t("2019") ){
+          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593"
+        } 
+        else if (input$thema == i18n_r()$t("Differences")) {
+          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 & Young People and COVID-19 2020, n = 4189"
+          
+        }
+        else{
+          
+          subtitle <- "Source: Young People and COVID-19 2020, n = 4189"
+        }
+    
        # only relevant for old method
         # dfn <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = asc )
         # dfx <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = ma[1,], y1 = ma[2,],y2= ma[3,],y3= ma[4,], n = c("9","8","1") )
@@ -596,6 +626,28 @@ document.querySelectorAll('button.action').forEach(button =>
         
     })
     
+    
+# works but ugly updates    
+#     output$back_content <- renderUI({
+#       
+#     
+#       tagList(column(12,tags$body(HTML(i18n$t('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
+# <p style="text-align: justify;">The Youth Survey Luxembourg is a representative, large-scale survey of Luxembourg residents.</p>
+# <p style="text-align: justify;">The target population of the Youth Survey Luxembourg 2019 is comprised of residents of Luxembourg who are 16&ndash;29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duch&eacute; de Luxembourg (STATEC) was used for sampling and weighting calculations for the Youth Survey Luxembourg.</p>
+# <h4 class="LC20lb DKV0Md" style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/yac-plus/"> Young People and COVID-19 (YAC+)</a></h4>
+# <p style="text-align: justify;">To assess the situation during and after the pandemic, two surveys will be conducted in 2020 and 2021 based on the Youth Survey Luxembourg 2019 and in close collaboration with the research group of the Child and Adolescent Health Study "<a href="https://www.jugend-in-luxemburg.lu/hbsc-kooperation/">Health Behavior in School-Aged Children</a>".</p>
+# <div class="elementor-element elementor-element-289e4d2 elementor-widget elementor-widget-text-editor" data-id="289e4d2" data-element_type="widget" data-widget_type="text-editor.default">
+# <div class="elementor-widget-container">
+# <div class="elementor-text-editor elementor-clearfix">
+# <p style="text-align: justify;">For YAC+, this group will be supplemented with children and adolescents aged 12 to 16. Thus, the age group of 12 to 29 years old can be surveyed.</p>
+# <p style="text-align: justify;">These standardized surveys will be supplemented by qualitative interviews to gain a deeper understanding of the situation and subjective evaluations of adolescents and young adults.</p>
+# </div>
+# </div>
+# </div>')))))
+#     }
+#     ) 
+      
+    
     # observe -----------------------------------------------------------------
     #ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.category);}") # sollte man global regeln
     
@@ -706,18 +758,23 @@ document.querySelectorAll('button.action').forEach(button =>
     # })
     # rename #github examp.
 
+    # sprache observe -------------------------------------------------------------
     observe({  #reactive update for labels
       #Achtung. translate rbaucht einer übersetzung in den radiobuttons, ansonsten spinnt der abru der hcs.
         updateRadioGroupButtons(session,"thema",label = i18n_r()$t("Year"),size = "normal",choices = i18n_r()$t(c("2019","2020","Differences")))
     })
     
     observe({  #reactive update for labels
-      #Achtung. translate rbaucht einer übersetzung in den radiobuttons, ansonsten spinnt der abru der hcs.
+      #Achtung. translate braucht einer übersetzung in den radiobuttons, ansonsten spinnt der abru der hcs.
         updateRadioGroupButtons(session,"test",label = i18n_r()$t("Sociodemographic"),size = "normal",choices = i18n_r()$t(c("None", "Age", "Gender","Status")))
     })
     
+    observe({  #reactive update for labels
+      #Achtung. translate braucht einer übersetzung in den radiobuttons, ansonsten spinnt der abru der hcs.
+      updateFlipBox(1,session)
+    })
     
-    # sprache obs -------------------------------------------------------------
+    
     
     observeEvent(input$selected_language,ignoreInit = T, {
         # This print is just for demonstration
@@ -735,8 +792,7 @@ document.querySelectorAll('button.action').forEach(button =>
       }
       print(input$mydata)
     })
-    mean(df)
-    
+
     #reactivce translations for ui buttons
     # i18n_r <- reactive({
     #   i18n
@@ -754,3 +810,6 @@ document.querySelectorAll('button.action').forEach(button =>
 shinyApp(ui = ui, server = server)
 
 # conditonalPanel Funktion auf Server verschieben. Sinnvoller, um Ressourcen zu sparen.
+
+#----- To Do------ 
+# 
