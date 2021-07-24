@@ -23,7 +23,7 @@ source("map.r")
 #library(ggvis) 
 #library(plyr)
 library(shiny.i18n) #dev version wegen google probs
-
+#install.packages("shiny.i18n")
 i18n <- Translator$new(translation_json_path = "translation.json")
 #i18n <- Translator$new(automatic = TRUE)
 i18n$set_translation_language('de')
@@ -78,11 +78,21 @@ script <- '
         console.log("hello from function hello!");
     };
 '
+i18n_html <- JS("var inner_text = document.getElementsByClassName('i18n');
+                      var parser = new DOMParser();
+                      for(var i=0; i<inner_text.length; i++) {
+                        var i_t = inner_text[i].innerText;
+                        var p_t = parser.parseFromString(i_t, 'text/html');
+                        console.log(inner_text[i].innerHTML);
+                        console.log(i_t);
+                        console.log(p_t); 
+                        document.getElementsByClassName('i18n')[i].innerHTML = i_t;
+                      }")
 
 
-css_style <-  tagList(  
-                tags$style(".fa-chart-bar,.fa-bars{color: #666666!important}"), #funzt 
-                tags$style(".pretty:hover, .selectize-input:hover {background: #e6e6e6;color: #666666!important}"), #funzt 
+css_style <- tagList(  
+                tags$style(".fa-chart-bar {color: #666666!important}"), #funzt 
+                tags$style(".fa-bars { color: #666666 !important}"), #funz  !!! <- nicht durch ; trennen 
                 tags$style(HTML(".state {font-size: 28px !important}")), #funz
                 tags$style(HTML("i { display: inline-block;
                   color: white;
@@ -96,6 +106,7 @@ css_style <-  tagList(
                 #tags$style("#shadow_row_1:focus {box-shadow: inset 0 0 0 2em var(--hover);}"), #funz nicht
                 tags$head(tags$script(' document.getElementById("Clicked").onclick = function() { Shiny.onInputChange("Clicked", NULL); }; ')), #?
                 tags$script('     $(document).on("keypress", function (e) { Shiny.onInputChange("mydata", e.which);     });   '),
+                tags$head(tags$script(HTML('for(var i=0; i<i18n_translations.length; i++){  var obj = {a:"de",b:"fr",c:"en",d:"_row"}; for(var	j in obj){  console.log(decodeEntities(i18n_translations[i][obj[j]]));i18n_translations[i][obj[j]] = decodeEntities(i18n_translations[i][obj[j]]);}}'))),
                 tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "css.css")),
                 tags$head(tags$style(HTML('* {font-family: "helvetica" };'))), # * um jedes Element zu selektieren. !important um  optionen in den Kasaden zu überschreiben
                 tags$head(tags$style(HTML(".shiny-input-container { font-size: 18px; }"))), #funzt
@@ -103,8 +114,8 @@ css_style <-  tagList(
                 tags$head(tags$style(HTML(".tooltip-inner {  text-align: center;    font-size: 14px;};"))), #funzt 
                 
                 tags$head(tags$style(HTML(".highcharts-input-container { font-size: 60px; }"))) #funzt nicht
+                ,tags$body( onload = HTML(i18n_html)) #just to initiate custom js once, and then language triggered
 )
-
 
   
 back_content <- tagList(column(12,tags$body(HTML(i18n$t('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
@@ -122,7 +133,7 @@ back_content <- tagList(column(12,tags$body(HTML(i18n$t('<h4 style="text-align: 
 </div>'))))) #"The target population of the Youth Survey Luxembourg is comprised of residents of Luxembourg who are 16–29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duché  de  Luxembourg  (STATEC)4  was  used  for  sampling  and  weighting calculations  for  the  Youth  Survey  Luxembourg."
 
 
-Download = JS("
+Download <- JS("
                   Highcharts.SVGRenderer.prototype.symbols.download = function (x, y, w, h) {
     var path = [
         // Arrow stem
@@ -148,6 +159,7 @@ Download = JS("
 ui <- fluidPage(#theme = "bootstrap.css",
   shiny.i18n::usei18n(i18n),#notwendig für  rendering on UI side
   singleton(tags$head(tags$script(src = "pop_patch.js"))),
+  singleton(tags$head(tags$script(src = "decode_entities.js"))),
   
     useShinyjs(),
     css_style,
@@ -159,19 +171,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
                              id = 1,
                              main_img = NULL,
                              header_img = NULL  ,
-                             back_content  = tagList(column(12,tags$body(i18n$t('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
-<p style="text-align: justify;">The Youth Survey Luxembourg is a representative, large-scale survey of Luxembourg residents.</p>
-<p style="text-align: justify;">The target population of the Youth Survey Luxembourg 2019 is comprised of residents of Luxembourg who are 16&ndash;29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duch&eacute; de Luxembourg (STATEC) was used for sampling and weighting calculations for the Youth Survey Luxembourg.</p>
-<h4 class="LC20lb DKV0Md" style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/yac-plus/"> Young People and COVID-19 (YAC+)</a></h4>
-<p style="text-align: justify;">To assess the situation during and after the pandemic, two surveys will be conducted in 2020 and 2021 based on the Youth Survey Luxembourg 2019 and in close collaboration with the research group of the Child and Adolescent Health Study "<a href="https://www.jugend-in-luxemburg.lu/hbsc-kooperation/">Health Behavior in School-Aged Children</a>".</p>
-<div class="elementor-element elementor-element-289e4d2 elementor-widget elementor-widget-text-editor" data-id="289e4d2" data-element_type="widget" data-widget_type="text-editor.default">
-<div class="elementor-widget-container">
-<div class="elementor-text-editor elementor-clearfix">
-<p style="text-align: justify;">For YAC+, this group will be supplemented with children and adolescents aged 12 to 16. Thus, the age group of 12 to 29 years old can be surveyed.</p>
-<p style="text-align: justify;">These standardized surveys will be supplemented by qualitative interviews to gain a deeper understanding of the situation and subjective evaluations of adolescents and young adults.</p>
-</div>
-</div>
-</div>'))))
+                             back_content  = tagList(column(12,tags$body(i18n$t("<h4 style='text-align: center;'><a href='https://www.jugend-in-luxemburg.lu/youth-survey/'>Youth Survey Luxembourg</a></h4> <p style='text-align: justify;'>The Youth Survey Luxembourg is a representative, large-scale survey of Luxembourg residents.</p> <p style='text-align: justify;'>The target population of the Youth Survey Luxembourg 2019 is comprised of residents of Luxembourg who are 16&ndash;29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duch&eacute; de Luxembourg (STATEC) was used for sampling and weighting calculations for the Youth Survey Luxembourg.</p> <h4 class='LC20lb DKV0Md' style='text-align: center;'><a href='https://www.jugend-in-luxemburg.lu/yac-plus/'> Young People and COVID-19 (YAC+)</a></h4> <p style='text-align: justify;'>To assess the situation during and after the pandemic, two surveys will be conducted in 2020 and 2021 based on the Youth Survey Luxembourg 2019 and in close collaboration with the research group of the Child and Adolescent Health Study '<a href='https://www.jugend-in-luxemburg.lu/hbsc-kooperation/'>Health Behavior in School-Aged Children</a>'.</p> <div class='elementor-element elementor-element-289e4d2 elementor-widget elementor-widget-text-editor' data-id='289e4d2' data-element_type='widget' data-widget_type='text-editor.default'> <div class='elementor-widget-container'> <div class='elementor-text-editor elementor-clearfix'> <p style='text-align: justify;'>For YAC+, this group will be supplemented with children and adolescents aged 12 to 16. Thus, the age group of 12 to 29 years old can be surveyed.</p> <p style='text-align: justify;'>These standardized surveys will be supplemented by qualitative interviews to gain a deeper understanding of the situation and subjective evaluations of adolescents and young adults.</p> </div> </div> </div>")))) 
                              ,
                              radioGroupButtons("thema",i18n$t('Year'), choiceNames = c("2019","2020","Differences"),choiceValues = c("2019","2020","Differences"), size = "normal",direction = "horizontal"),
                              fluidRow(
@@ -215,7 +215,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                                 inputId='selected_language',
                                                 label= NULL,
                                                 choices = c("English" = "en", "Deutsch" = "de", "Français" = "fr"),
-                                                selected = i18n$get_key_translation()
+                                                selected = "en"
                                               ) )
                                               #,
                                         #       tags$span(  
@@ -280,16 +280,11 @@ document.querySelectorAll('button.action').forEach(button =>
   #   "$('#hcchart1').find('.highcharts-container > .highcharts-root > .highcharts-subtitle').attr('id', function(i) {",
   #   "return 'test_row_' + i})")
 
+
   ## once the UI is loaded, call JS function and attach popover to it. For dependency loading one call has to come from UI. e.g. bstootltips ------------
  
   session$onFlushed(function() {
     runjs(add_id_js)
-    addPopover(session,"test_row_1",NULL,'<p style="text-align: justify;"><strong>Age</strong>&nbsp;- While the Youth Survey Luxembourg 2019 has asked 16-29 year old people residing in Luxembourg, the YAC+ survey 2020, which is an additional survey based on the Youth Survey Luxembourg, has surveyed 12-29-year olds.</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body")) #quotesign trick, cuz fked up package
-    addPopover(session,"test_row_2",NULL,'<p style="text-align: justify;"><strong>Gender </strong>&ndash; The Youth Survey Luxembourg offers their respondents the possibility to define their gender apart from the binary CIS-categories of male and female. However, the number of answers was too small to be able to conduct statistically sound analyses</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
-    addPopover(session,"test_row_3",NULL,'<p style="text-align: justify;"><strong>Status</strong>&ndash; NEET is the acronym for &lsquo;not in education, employment or training&rsquo;. This entails every respondent of the Youth Survey who solely answered to be either unemployed and looking for work (unemployed) or unemployed and not looking work (economically inactive). Meaning that every respondent who, at the time of the survey, declared that they are either in education, employment or training and who were a pupil, apprentice or student, were excluded from the NEET category.</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
-    addPopover(session,"thema_row_0",NULL,'<p style="text-align: justify;"><strong>2019 </strong>&ndash; Youth Survey Luxembourg</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
-    addPopover(session,"thema_row_1",NULL,'<p style="text-align: justify;"><strong>2020 </strong>&ndash; YAC+</p>',"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
-
   }, once = FALSE)
     
   
@@ -298,7 +293,15 @@ document.querySelectorAll('button.action').forEach(button =>
   observeEvent(language() ,{
     
     delay(600, #haudruff loesung
-      addPopover(session,"thema_row_2",NULL,i18n_r()$t('<p style="text-align: justify;"><strong>Differences </strong> </p>'),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"),trigger = "hover")
+          {
+      addPopover(session,"thema_row_2",NULL,i18n_r()$t("<p style='text-align:justify'><strong>Differences </strong>&ndash; Only persons over 16 considered.</p>"),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"),trigger = "hover")
+      addPopover(session,"thema_row_1",NULL,i18n_r()$t("<p style='text-align: justify;'><strong>2020 </strong>&ndash; YAC+</p>"),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
+      addPopover(session,"test_row_1",NULL,i18n_r()$t("<p style='text-align: justify;'><strong>Age</strong>&nbsp;- While the Youth Survey Luxembourg 2019 has asked 16-29 year old people residing in Luxembourg, the YAC+ survey 2020, which is an additional survey based on the Youth Survey Luxembourg, has surveyed 12-29-year olds.</p>"),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body")) #quotesign trick, cuz fked up package
+      addPopover(session,"test_row_2",NULL,i18n_r()$t("<p style='text-align: justify;'><strong>Gender </strong>&ndash; The Youth Survey Luxembourg offers their respondents the possibility to define their gender apart from the binary CIS-categories of male and female. However, the number of answers was too small to be able to conduct statistically sound analyses</p>"),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
+      addPopover(session,"test_row_3",NULL,i18n_r()$t("<p style='text-align: justify;'><strong>Status</strong>&ndash; NEET is the acronym for &lsquo;not in education, employment or training&rsquo;. This entails every respondent of the Youth Survey who solely answered to be either unemployed and looking for work (unemployed) or unemployed and not looking work (economically inactive). Meaning that every respondent who, at the time of the survey, declared that they are either in education, employment or training and who were a pupil, apprentice or student, were excluded from the NEET category.</p>"),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
+      addPopover(session,"thema_row_0",NULL,i18n_r()$t("<p style='text-align: justify;'><strong>2019 </strong>&ndash; Youth Survey Luxembourg</p>"),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
+          
+    }
   )
   }
     
@@ -444,7 +447,7 @@ document.querySelectorAll('button.action').forEach(button =>
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by age."))%>%
             
-            hc_add_series(mutate(df_age19, Age_Cat = i18n$t(df_age19$Age_Cat)), "column",hcaes(x = Var1, y = Freq*100, group = Age_Cat),
+            hc_add_series(mutate(df_age19, Age_Cat = i18n$t(df_age19$Age_Cat)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Age_Cat),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -456,7 +459,7 @@ document.querySelectorAll('button.action').forEach(button =>
           
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by gender."))%>%
-            hc_add_series(mutate(df_gender19, Gender = i18n$t(df_gender19$Gender)), "column",hcaes(x = Var1, y = Freq*100, group = Gender)) %>%
+            hc_add_series(mutate(df_gender19, Gender = i18n$t(df_gender19$Gender)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Gender)) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
             #            hcaes(x = ShareType, low = lower, high = upper, group = Gender)) %>%
@@ -468,7 +471,7 @@ document.querySelectorAll('button.action').forEach(button =>
           
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by status."))%>%
-            hc_add_series(mutate(df_status19, status = i18n$t(df_status19$status)), "column",hcaes(x = Var1, y = Freq*100, group = status),
+            hc_add_series(mutate(df_status19, status = i18n$t(df_status19$status)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = status),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -491,7 +494,7 @@ document.querySelectorAll('button.action').forEach(button =>
                 # hc_xAxis(categories = dfn$name ,additonialInfo = 1:4 ) %>% 
                 # hc_add_series(name= " ",data =l2$dfn[c("name","y")] ,showInLegend = F)
           
-          hc_add_series(df020F, "column",hcaes(x = Var1, y = round(Freq,4)*100),showInLegend = F,
+          hc_add_series(df020F, "column",hcaes(x = i18n$t(Var1), y = round(Freq,4)*100),showInLegend = F,
                         tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -512,7 +515,7 @@ document.querySelectorAll('button.action').forEach(button =>
             #     hc_add_series(name= i18n$t("Employed"),data =df2$y1 ) %>%
             #     hc_add_series(name= i18n$t("NEET"), data =df2$y2) 
           
-          hc_add_series(mutate(df_status20F, status = i18n$t(df_status20F$status)), "column",hcaes(x = Var1, y = Freq*100, group = status),
+          hc_add_series(mutate(df_status20F, status = i18n$t(df_status20F$status)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = status),
                         tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -535,7 +538,7 @@ document.querySelectorAll('button.action').forEach(button =>
             #     #hc_add_series(type= "errorbar",linkedTo = i18n$t("12-16"), data= list(c(20,60),c(20,30),c(20,40)))
             #    # hc_add_series(name= i18n$t("24-29"),type= "errorbar", data= map(ma[3,],.f = function(x) x+ c(-1.96,1.96)*sqrt((x/100*(1-x/100)/1000))*100))
             # 
-          hc_add_series(mutate(df_age20F, Age_Cat = i18n$t(df_age20F$Age_Cat)), "column",hcaes(x = Var1, y = Freq*100, group = Age_Cat),
+          hc_add_series(mutate(df_age20F, Age_Cat = i18n$t(df_age20F$Age_Cat)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Age_Cat),
                         tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -554,7 +557,7 @@ document.querySelectorAll('button.action').forEach(button =>
                 # hc_xAxis(categories = df3$name) %>% 
                 # hc_add_series(name= i18n$t("Female"), data =df3$y )%>%
                 # hc_add_series(name= i18n$t("Male"),data =df3$y1 )
-            hc_add_series(mutate(df_gender20F, Gender = i18n$t(df_gender20F$Gender)), "column",hcaes(x = Var1, y = Freq*100, group = Gender),
+            hc_add_series(mutate(df_gender20F, Gender = i18n$t(df_gender20F$Gender)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Gender),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -574,7 +577,7 @@ document.querySelectorAll('button.action').forEach(button =>
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days."))%>%
             hc_tooltip(headerFormat = '<span style="font-size:16px"><b>{point.key}{point.n}</b></span><table>',pointFormatter= JS("function () { return  '<tr><td style = color:'+ this.color +';font-size:16px;padding:0;>'  +'</td>'+ '<td style =font-size:16px;padding:0;>' +'<b>' + this.y.toFixed(1) +'%' +'</td>' + '<td>'+ '<b/>' + ' \u00B1' + (Math.sqrt(((this.y/100)*(1-(this.y/100)))  /1000)*2*100).toFixed(1) + '%' + '</b>'+ '</td>'+'</tr>';  }"), shared= TRUE,footerFormat = '{series.n}{this.n}</table> ',useHTML =T) %>%
             
-            hc_add_series(mutate(df020, Freq = round(df020$Freq-df019$Freq,4),se = df019$se), "column",hcaes(x = Var1, y = Freq*100),showInLegend = FALSE,
+            hc_add_series(mutate(df020, Freq = round(df020$Freq-df019$Freq,4),se = df019$se), "column",hcaes(x = i18n$t(Var1), y = Freq*100),showInLegend = FALSE,
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -587,7 +590,7 @@ document.querySelectorAll('button.action').forEach(button =>
           
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by age."))%>%
-            hc_add_series(mutate(df_age20, Freq = df_age20$Freq-df_age19$Freq,se = df_age19$se, Age_Cat = i18n$t(df_age20$Age_Cat)), "column",hcaes(x = Var1, y = Freq*100, group = Age_Cat),
+            hc_add_series(mutate(df_age20, Freq = df_age20$Freq-df_age19$Freq,se = df_age19$se, Age_Cat = i18n$t(df_age20$Age_Cat)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Age_Cat),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -599,7 +602,7 @@ document.querySelectorAll('button.action').forEach(button =>
           
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by gender."))%>%
-            hc_add_series(mutate(df_gender20, Freq = df_gender20$Freq-df_gender19$Freq,se = df_gender19$se,Gender = i18n$t(df_gender20$Gender) ), "column",hcaes(x = Var1, y = Freq*100, group = Gender)) %>%
+            hc_add_series(mutate(df_gender20, Freq = df_gender20$Freq-df_gender19$Freq,se = df_gender19$se,Gender = i18n$t(df_gender20$Gender) ), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Gender)) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
             #            hcaes(x = ShareType, low = lower, high = upper, group = Gender)) %>%
@@ -612,7 +615,7 @@ document.querySelectorAll('button.action').forEach(button =>
           hc %>%
 
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by status."))%>%
-            hc_add_series(mutate(df_status20, Freq = df_status20$Freq - df_status19$Freq, se = df_status19$se, status = i18n$t(df_status20$status) ), "column",hcaes(x = Var1, y = round(Freq,4)*100, group = status),
+            hc_add_series(mutate(df_status20, Freq = df_status20$Freq - df_status19$Freq, se = df_status19$se, status = i18n$t(df_status20$status) ), "column",hcaes(x = i18n$t(Var1), y = round(Freq,4)*100, group = status),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -781,6 +784,9 @@ document.querySelectorAll('button.action').forEach(button =>
         print(paste("Language change!", input$selected_language))
         # Here is where we update language in session
         shiny.i18n::update_lang(session, input$selected_language)
+        
+     
+        delay(700,{runjs(i18n_html)}) # delay wegen Reihenfolge nötig. Change language, dann neu setzen. js_code is für translation workaround notwendig. i18n setzt html als plain ein. Nicht als HTML. 
     })
     
     
