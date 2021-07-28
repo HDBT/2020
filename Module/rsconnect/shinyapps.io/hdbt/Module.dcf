@@ -1,0 +1,13 @@
+name: Module
+title: Module
+username:
+account: hdbt
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3893513
+bundleId: 4622281
+url: https://hdbt.shinyapps.io/Module/
+when: 1621556912.4802
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: global.r|hc_webpage.html|module_global.R|translation_en.csv|wb.xlsx

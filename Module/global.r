@@ -195,11 +195,11 @@ tapply(complete$A15_5,complete$Agegroup, density) %>%
 # Beispiel Density Chart.
 highchart() %>% 
   hc_chart(type= "areasplinerange") %>% 
-  hc_colors(colors) %>% 
+  #hc_colors(colors) %>% 
   hc_plotOptions(areasplinerange = list(marker = FALSE, states = list(hover = list(enabled = FALSE)) ))  %>%
   hc_tooltip( shared = T, useHTML =T, crosshairs =TRUE)%>%
   hc_yAxis(title = list(text = NULL), categories = c("Frage 1", "Frage 2", "Frage 3", "Frage 4" ), max= 3, labels = list(formatter = JS("function(){if (this.pos < 4) return this.value}"))) %>%
-  hc_add_series(name = " Frage 1", data= densinator(dens,0), zIndex ="5")    %>%
+  hc_add_series(name = " Frage 1", data= densinator(dens,0.0), zIndex ="5")    %>%
   hc_add_series(name = " Frage 2", data= densinator(dens_F2,1),zIndex ="1" ) %>%
   hc_add_series(name = " Frage 3", data= densinator(dens_F3,2),zIndex ="2 ") %>%
   hc_add_series(name = " Frage 4", data= densinator(dens_F4,3),zIndex ="4" ) 
@@ -227,7 +227,7 @@ dens$y <- dens$y+3
 dens$z <- sapply(dens$y, function(x) return(3))
 dens <- list(dens$x, dens$y,dens$z)
 dens <- list_parse2(as.data.frame(dens))
-dens_F2 <-density(drop_na(ysl19 %>% select("A86_12","Age") %>% filter(A86_12 == 1))$Age+14)
+dens_F2 <-density(drop_na(ysl19 %>% select("A86_12","Age") %>% filter(A86_12 == 1))$Age+14)$y / (density(drop_na(ysl19 %>% select("A86_12","Age") %>% filter(A86_12 == 1))$Age+14)$y+ density(drop_na(ysl19 %>% select("A86_12","Age") %>% filter(A86_12 == 0))$Age+14)$y)
 dens_F3 <-density(drop_na(ysl19 %>% select("A86_13","Age") %>% filter(A86_13 == 1))$Age+14)
 dens_F4 <-density(drop_na(ysl19 %>% select("A86_14","Age") %>% filter(A86_14 == 1))$Age+14)
 
@@ -247,12 +247,12 @@ densinator(dens_F2,3)
 # conditional dens plot
 highchart() %>% 
   hc_chart(type= "areaspline") %>% 
-  hc_colors(colors) %>% 
+  #hc_colors(colors) %>% 
   hc_plotOptions(areasplinerange = list(marker = FALSE, states = list(hover = list(enabled = FALSE)) ))  %>%
   hc_tooltip( shared = T, useHTML =T, crosshairs =TRUE, valueDecimals = 3, headerFormat = NULL, footerFormat= NULL, pointFormat = "<b>{series.name}</b>: {point.y} Prozent <br/>")%>%
-  hc_yAxis(title = list(text = NULL), categories = c("Frage 1", "Frage 2", "Frage 3", "Frage 4" ), max= 3, labels = list(formatter = JS("function(){if (this.pos < 4) return this.value}"))) %>%
+  hc_yAxis(plotBands =list(list(from = 0, to= 2, color='rgba(68, 170, 213, 0.1)', label = list(text= "jieofwo") ),list(from = 0, to= 1, color='rgba(68, 170, 213, 0.1)', label = list(text= "jieofwo") )) ,title = list(text = NULL), categories = c("Frage 1", "Frage 2", "Frage 3", "Frage 4" ), max= 3, labels = list(formatter = JS("function(){if (this.pos < 4) return this.value}"))) %>%
   hc_add_series(name = " Frage 1", data= sumdens, zIndex ="5") %>%
-  hc_add_series(name = "Frage 2", data = sumdens2+1, zIndex = "3")
+  hc_add_series(name = "Frage 2", data = dens_F2+0, zIndex = "3")
   
 
   #calc dens
@@ -288,6 +288,8 @@ plot(dens$x,sumdens)
 
 
 
-# Translation -------------------------------------------------------------
+# Neuer Versuch -------------------------------------------------------------
+# Zwei Versionen
+
 
 
