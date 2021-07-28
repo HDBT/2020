@@ -79,9 +79,9 @@ jsonlite::write_json(yac_list, "translationYAC.json")
 #allgemeine translation file erstellen
 
 trans <- read_csv("translation_en.csv")
-
+trans <- jsonlite::read_json("translation.json")
 p_load(editData)
-tans <- editData(tans)
+tans <- editData(as_tibble(trans$translation))
 trans <- tans
 
 #trans <- tans %>% mutate(fr = "test")

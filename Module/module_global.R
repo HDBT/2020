@@ -27,8 +27,9 @@ df20_full <- df %>% mutate(alc = ifelse(A60 == 0, 0,1),
                                   A5_13 == 1~ 3,
                                   A5_14 == 1~ 3,
                                   A5_15 == 1~ 3
-                
-              )
+              ),
+              wealth = A38
+              
 )
 
 ##### 20 diff equalizer ######
@@ -57,7 +58,9 @@ df20 <- df %>% filter(Age > 15) %>% mutate(alc = ifelse(A60 == 0, 0,1),
                                   A5_14 == 1~ 3,
                                   A5_15 == 1~ 3
                 
-              )
+              ),
+              wealth = A38
+              
 )
 
 # 19 df ----------------
@@ -662,36 +665,36 @@ df020
 df20_Diff_Age_1 <- as.data.frame(prop.table(table(df20$alc,df20$Age_Cat),2)%>% round(3)) %>% 
   filter(Var1 != 0)
 
-df20_Diff_Age_1 <- df20_Diff_Age_1 %>% mutate(Var1 = recode(Var1,"1" = "Alcohol"), Var2 = case_when(Var2 == 1 ~ "16-19 20",
-                                                                          Var2 == 2 ~ "20-24 20",
-                                                                          Var2 == 3 ~ "25-29 20"))
-df20_Diff_Age_1 <- c_table(alc,Age_Cat) %>% mutate(Var1 = "Alcohol", Age_Cat = recode(Age_Cat, "1"= "16-19 20",
-                                                                          "2" = "20-24 20",
-                                                                          "3" = "25-29 20" ))
+df20_Diff_Age_1 <- df20_Diff_Age_1 %>% mutate(Var1 = recode(Var1,"1" = "Alcohol"), Var2 = case_when(Var2 == 1 ~ "16-19",
+                                                                          Var2 == 2 ~ "20-24",
+                                                                          Var2 == 3 ~ "25-29"))
+df20_Diff_Age_1 <- c_table(alc,Age_Cat) %>% mutate(Var1 = "Alcohol", Age_Cat = recode(Age_Cat, "1"= "16-19",
+                                                                          "2" = "20-24",
+                                                                          "3" = "25-29" ))
 
 df20_Diff_Age_1
 #second group
 df20_Diff_Age_2 <- as.data.frame(prop.table(table(df20$smoke,df20$Age_Cat),2)%>% round(3)) %>%
   filter(Var1 != 0)
 
-df20_Diff_Age_2 <- df20_Diff_Age_2 %>% mutate(Var1 = recode(Var1,"1" = "Tobacco"),  Var2 = case_when(Var2 == 1 ~ "16-19 20",
-                                                                                 Var2 == 2 ~ "20-24 20",
-                                                                                 Var2 == 3 ~ "25-29 20"))
-df20_Diff_Age_2 <- c_table(smoke,Age_Cat) %>%  mutate(Var1 = "Tobacco", Age_Cat = recode(Age_Cat, "1"= "16-19 20",
-                                                                                     "2" = "20-24 20",
-                                                                                     "3" = "25-29 20" ))
+df20_Diff_Age_2 <- df20_Diff_Age_2 %>% mutate(Var1 = recode(Var1,"1" = "Tobacco"),  Var2 = case_when(Var2 == 1 ~ "16-19",
+                                                                                 Var2 == 2 ~ "20-24",
+                                                                                 Var2 == 3 ~ "25-29"))
+df20_Diff_Age_2 <- c_table(smoke,Age_Cat) %>%  mutate(Var1 = "Tobacco", Age_Cat = recode(Age_Cat, "1"= "16-19",
+                                                                                     "2" = "20-24",
+                                                                                     "3" = "25-29" ))
 
 df20_Diff_Age_2
 # third group
 df20_Diff_Age_3 <- as.data.frame(prop.table(table(df20$cannabis,df20$Age_Cat),2)%>% round(3)) %>%
   filter(Var1 != 0)
 
-df20_Diff_Age_3 <- df20_Diff_Age_3 %>% mutate(Var1 = recode(Var1,"1" = "Cannabis"),  Var2 = case_when(Var2 == 1 ~ "16-19 20",
-                                                                                  Var2 == 2 ~ "20-24 20",
-                                                                                  Var2 == 3 ~ "25-29 20"))
-df20_Diff_Age_3 <- c_table(cannabis,Age_Cat)  %>% mutate(Var1 = "Cannabis", Age_Cat = recode(Age_Cat, "1"= "16-19 20",
-                                                                                          "2" = "20-24 20",
-                                                                                          "3" = "25-29 20" ))
+df20_Diff_Age_3 <- df20_Diff_Age_3 %>% mutate(Var1 = recode(Var1,"1" = "Cannabis"),  Var2 = case_when(Var2 == 1 ~ "16-19",
+                                                                                  Var2 == 2 ~ "20-24",
+                                                                                  Var2 == 3 ~ "25-29"))
+df20_Diff_Age_3 <- c_table(cannabis,Age_Cat)  %>% mutate(Var1 = "Cannabis", Age_Cat = recode(Age_Cat, "1"= "16-19",
+                                                                                          "2" = "20-24",
+                                                                                          "3" = "25-29" ))
 df20_Diff_Age_3
 df_age20 <- rbind(df20_Diff_Age_1, df20_Diff_Age_2,df20_Diff_Age_3) 
 df_age20
@@ -767,7 +770,7 @@ df_status20 <- rbind(df20_Diff_Status_1, df20_Diff_Status_2,df20_Diff_Status_3)
 #df_status20 <-  df_status20 %>% mutate(n = 1000)
 df_status20
 
-save(df_gender20,df_status20, df_age20,df020,file= "data20_Diff.RData")
+save(df_gender20,df_status20, df_age20,df020,file= "Module/data20_Diff.RData")
 
 
 # compare
