@@ -187,7 +187,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
              #extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('.Clicked', 'null'); }", functions = c()), #why?
              column(12,      
         
-                    flipBoxN(front_btn_text = i18n$t("Data basis and methodology"),
+                    flipBoxN(front_btn_text = NULL, #created custom on next lines
                              id = 1,
                              main_img = NULL,
                              header_img = NULL  ,
@@ -213,7 +213,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                         #actionButton("mybutton", "action"),
                                           tags$style(HTML("#lang_div .shiny-input-container  {font-size: 16px;}")),  #individuelles style setzen indem man eine eigens erstellte id anspricht
                                           div(id ="lang_div", #prettySwitch(inputId = "switch","Spaltendiagramm",slim = T, value = TRUE),#div() um eigene ID zu setzen fürs ansprechen (individuelle style tags z.b.)
-                                              tags$span(shiny::tags$button(id = paste0("btn-", 1, "-front"), class = "btn btn-primary btn-rotate navitem",style = "float: center;",shiny::tags$i(class = "fa fa-long-arrow-right"), "Data basis and methodology")),
+                                              tags$span(shiny::tags$button(id = paste0("btn-", 1, "-front"), class = "btn btn-primary btn-rotate navitem",style = "float: center;",shiny::tags$i(class = "fa fa-long-arrow-right"), i18n$t("Data basis and methodology"))),
                                               tags$span(style='float: left; width:20%; bottom: 200;',prettyToggle(plain = TRUE,inputId = "switch",shape = "curve", label_on = "", label_off = "",inline = FALSE,value = TRUE, bigger = FALSE,fill = FALSE,outline= TRUE,icon_off = icon("bars", class = "c_border"),icon_on = icon("chart-bar", class =  "c_border"))),
                                               
                                               
