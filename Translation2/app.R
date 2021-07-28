@@ -3,12 +3,14 @@ library(shiny.i18n)
 library(shinyWidgets)
 library(highcharter)
 library(dplyr)
+library(shinydashboardPlus)
 #i18n <- Translator$new(translation_csvs_path = "../Alpha0")
-i18n <- Translator$new(translation_json_path  = "translation.json")
-i18n$set_translation_language("pt")
+
+i18n <- Translator$new(translation_json_path = "translation.json")
+i18n$set_translation_language("en")
 ui <- fluidPage(
     usei18n(i18n),
-    h1(i18n$t("Hello")),
+    flipBox(id = 2, front = h1("jiji"),back = h1(i18n$t("Gender")), trigger= "hover"),
     actionButton("change", i18n$t("Change language")),
     radioGroupButtons("radio", i18n$t("Radio"), c("Identitaet", "Theme")),
     selectInput("select", i18n$t("Choose"), c("one", "two", "three")),
@@ -58,8 +60,7 @@ server <- function(input, output, session) {
             hc_subtitle(text = "Luxembourg, 2019") %>%
             hc_plotOptions(series = list(#column = list(stacking = "normal"), 
                 borderWidth=0,
-                dataLabels = list(style = list(fontSize = "14px"),enabled = TRUE),
-                events = list(click = ClickFunction)))%>%
+                dataLabels = list(style = list(fontSize = "14px"),enabled = TRUE)))%>%
             hc_tooltip(headerFormat = '<span style="font-size:16px">{point.key}</span><table>', pointFormat = '<tr><td style="color:{series.color};font-size:16px;padding:0">{series.name}: </td><td style="padding:0;font-size:16px;"><b>{point.y:.1f} %</b></td></tr>', footerFormat = '</table>', shared = T, useHTML =T) %>%
             hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu"  )), filename = "custom-file-name_Luxembourg_Data") 
         #hc_exporting(enabled = T, buttons = list(contextButton = list( symbol = "menu",text = "Download", menuItems = "null", onclick = JS("function () { this.renderer.label('efwfe',100,100).attr({fill:'#a4edba',r:5,padding: 10, zIndex: 10}) .css({ fontSize: '1.5em'}) .add();}") )), filename = "custom-file-name_Luxembourg_Data") 

@@ -76,7 +76,14 @@ script <- '
         console.log("hello from function hello!");
     };
 '
-
+css_list <- tagList(
+tags$head(tags$script(' document.getElementById("Clicked").onclick = function() {
+ Shiny.onInputChange("Clicked", NULL); }; ')),
+tags$head(tags$script('function printChart() { hcchart1.print() ;};')),
+tags$head(tags$style(HTML('* {font-family: "Helvetica" !important};'))), # * um jedes Element zu selektieren. !important um  optionen in den Kasaden zu überschreiben
+tags$head(tags$style(HTML(".shiny-input-container { font-size: 18px; }"))), #funzt
+tags$head(tags$style(HTML(".highcharts-input-container { font-size: 60px; }"))) #funzt nicht
+)
 
 
 # sprache -----------------------------------------------------------------
@@ -84,12 +91,7 @@ script <- '
 # UI
 ui <- fluidPage(#theme = "bootstrap.css",
   useShinyjs(),
-  tags$head(tags$script(' document.getElementById("Clicked").onclick = function() {
- Shiny.onInputChange("Clicked", NULL); }; ')),
-  tags$head(tags$script('function printChart() { hcchart1.print() ;};')),
-  tags$head(tags$style(HTML('* {font-family: "Helvetica" !important};'))), # * um jedes Element zu selektieren. !important um  optionen in den Kasaden zu überschreiben
-  tags$head(tags$style(HTML(".shiny-input-container { font-size: 18px; }"))), #funzt
-  tags$head(tags$style(HTML(".highcharts-input-container { font-size: 60px; }"))), #funzt nicht
+  css_list,
               fluidRow(id ="first",shiny.i18n::usei18n(i18n),
                        extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('.Clicked', 'null'); }", functions = c()),
                        
