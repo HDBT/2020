@@ -3,7 +3,11 @@
 
 #
 #library(geojsonio)
+library(shiny.i18n) #dev version wegen google probs
+i18n <- shiny.i18n::Translator$new(translation_json_path = "translation.json")
+i18n$set_translation_language('de')
 library(shiny)
+#i18n <- Translator$new(translation_json_path = "translation.json")
 #library(leaflet)
 library(shinydashboard)
 library(shinydashboardPlus)
@@ -22,11 +26,9 @@ source("flipBox.R")
 source("map.r")
 #library(ggvis) 
 #library(plyr)
-library(shiny.i18n) #dev version wegen google probs
 #install.packages("shiny.i18n")
-i18n <- Translator$new(translation_json_path = "translation.json")
+
 #i18n <- Translator$new(automatic = TRUE)
-i18n$set_translation_language('de')
 
 #library(shinyjs)
 
@@ -91,8 +93,24 @@ i18n_html <- JS("var inner_text = document.getElementsByClassName('i18n');
 
 
 css_style <- tagList(  
-                tags$style(".fa-chart-bar {color: #666666!important}"), #funzt 
-                tags$style(".fa-bars { color: #666666 !important}"), #funz  !!! <- nicht durch ; trennen 
+                
+                tags$style(".fa-bars, .fa-chart-bar  { color: #666666 !important; border: 0.9px solid #cccccc !important;padding: 6px 12px;
+                                                      display: inline-block!important;
+                                                      width: 100%!important;
+                                                      overflow: hidden!important;
+                                                      position: relative!important;
+                                                      z-index: 1!important;
+                                                      -webkit-box-sizing: border-box!important;
+                                                      -moz-box-sizing: border-box!important;
+                                                      box-sizing: border-box!important;
+                                                      -webkit-box-shadow: none!important;
+                                                      box-shadow: none!important;
+                                                      -webkit-border-radius: 4px!important;
+                                                      -moz-border-radius: 4px!important;
+                                                      border-radius: 4px!important;
+                                                      transform: scale(1.2) !important;
+                           }"), #funz  !!! <- nicht durch ; trennen 
+
                 tags$style(HTML(".state {font-size: 28px !important}")), #funz
                 tags$style(HTML("i { display: inline-block;
                   color: white;
@@ -163,11 +181,13 @@ ui <- fluidPage(#theme = "bootstrap.css",
   
     useShinyjs(),
     css_style,
+    bsTooltip("switch", i18n$t("Switch between horizontal and vertical orientation"),"left", options = list(container = "body")), #notwendig, um BS serveritig laufen zu lassen. Noch redundant, was machen?
+  
     fluidRow(id ="first",
              #extendShinyjs(text = "shinyjs.resetClick = function() { Shiny.onInputChange('.Clicked', 'null'); }", functions = c()), #why?
              column(12,      
         
-                    flipBoxN(front_btn_text = "Data basis and methodology",
+                    flipBoxN(front_btn_text = i18n$t("Data basis and methodology"),
                              id = 1,
                              main_img = NULL,
                              header_img = NULL  ,
@@ -186,7 +206,6 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                         )    
                                  ),
                                  
-                                 bsTooltip("switch", "Switch between horizontal and vertical orientation","left", options = list(container = "body")), #notwendig, um serveritig laufen zu lassen
                                  #setShadow(id = "shadow_row_0"), #switch
                                  #setShadow(id = "shadow_row_1"), #switch
                                  column(10,
@@ -195,7 +214,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                           tags$style(HTML("#lang_div .shiny-input-container  {font-size: 16px;}")),  #individuelles style setzen indem man eine eigens erstellte id anspricht
                                           div(id ="lang_div", #prettySwitch(inputId = "switch","Spaltendiagramm",slim = T, value = TRUE),#div() um eigene ID zu setzen fürs ansprechen (individuelle style tags z.b.)
                                               tags$span(shiny::tags$button(id = paste0("btn-", 1, "-front"), class = "btn btn-primary btn-rotate navitem",style = "float: center;",shiny::tags$i(class = "fa fa-long-arrow-right"), "Data basis and methodology")),
-                                              tags$span(style='float: left; width:20%; bottom: 200;',prettyToggle(plain = TRUE,inputId = "switch",shape = "curve", label_on = "", label_off = "",inline = FALSE,value = TRUE, bigger = FALSE,fill = FALSE,outline= TRUE,icon_off = icon("bars"),icon_on = icon("chart-bar"))),
+                                              tags$span(style='float: left; width:20%; bottom: 200;',prettyToggle(plain = TRUE,inputId = "switch",shape = "curve", label_on = "", label_off = "",inline = FALSE,value = TRUE, bigger = FALSE,fill = FALSE,outline= TRUE,icon_off = icon("bars", class = "c_border"),icon_on = icon("chart-bar", class =  "c_border"))),
                                               
                                               
                                               
@@ -215,7 +234,7 @@ ui <- fluidPage(#theme = "bootstrap.css",
                                                 inputId='selected_language',
                                                 label= NULL,
                                                 choices = c("English" = "en", "Deutsch" = "de", "Français" = "fr"),
-                                                selected = "en"
+                                                selected = "de"
                                               ) )
                                               #,
                                         #       tags$span(  
@@ -300,6 +319,7 @@ document.querySelectorAll('button.action').forEach(button =>
       addPopover(session,"test_row_2",NULL,i18n_r()$t("<p style='text-align: justify;'><strong>Gender </strong>&ndash; The Youth Survey Luxembourg offers their respondents the possibility to define their gender apart from the binary CIS-categories of male and female. However, the number of answers was too small to be able to conduct statistically sound analyses</p>"),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
       addPopover(session,"test_row_3",NULL,i18n_r()$t("<p style='text-align: justify;'><strong>Status</strong>&ndash; NEET is the acronym for &lsquo;not in education, employment or training&rsquo;. This entails every respondent of the Youth Survey who solely answered to be either unemployed and looking for work (unemployed) or unemployed and not looking work (economically inactive). Meaning that every respondent who, at the time of the survey, declared that they are either in education, employment or training and who were a pupil, apprentice or student, were excluded from the NEET category.</p>"),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
       addPopover(session,"thema_row_0",NULL,i18n_r()$t("<p style='text-align: justify;'><strong>2019 </strong>&ndash; Youth Survey Luxembourg</p>"),"right", options = list(delay=list(show= 500, hide = 100), html = "true",container = "body"))
+      addTooltip(session,id = "switch",title = i18n_r()$t("Switch between horizontal and vertical orientation"),"left", options = list(container = "body"))
           
     }
   )
@@ -335,32 +355,32 @@ document.querySelectorAll('button.action').forEach(button =>
       )
   }
  
-  
-     hover <- JS("function() {
-     var chart = this
-        this.title.on('mouseover', e => {
-          chart.myLabel = this.renderer.label('this.title.textStr', e.x, e.y, 'rectangle')
-            .css({
-              color: '#FFFFFF'
-            })
-            .attr({
-              fill: 'rgba(0, 0, 0, 0.75)',
-              padding: 8,
-              r: 4,
-              
-          })
-            .add()
-            .toFront();
-        })
-        
-        this.title.on('mouseout', e => {
-          if(chart.myLabel){
-          	chart.myLabel.destroy();
-          }
-        })
-
-      }")
-    
+     # title tooltips render in HS
+     # hover <- JS("function() {
+     # var chart = this
+     #    this.title.on('mouseover', e => {
+     #      chart.myLabel = this.renderer.label('this.title.textStr', e.x, e.y, 'rectangle')
+     #        .css({
+     #          color: '#FFFFFF'
+     #        })
+     #        .attr({
+     #          fill: 'rgba(0, 0, 0, 0.75)',
+     #          padding: 8,
+     #          r: 4,
+     #          
+     #      })
+     #        .add()
+     #        .toFront();
+     #    })
+     #    
+     #    this.title.on('mouseout', e => {
+     #      if(chart.myLabel){
+     #      	chart.myLabel.destroy();
+     #      }
+     #    })
+     # 
+     #  }")
+     # 
 
     runjs(Download)
     
@@ -371,22 +391,22 @@ document.querySelectorAll('button.action').forEach(button =>
     
     # Tab2 Vis ----------------------------------------------------------------
     output$hcchart1 <- renderHighchart({
-
+      
     #switch proxy für charttype
         if (input$switch == T)
         {switch <-"column"
         } else { switch <- "bar"
         }  
         if (input$thema == i18n_r()$t("2019") ){
-          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593"
+          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 (16 - 29 year olds)"
         } 
         else if (input$thema == i18n_r()$t("Differences")) {
-          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 & Young People and COVID-19 2020, n = 4189"
+          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 & Young People and COVID-19 2020, n = 3562 (16 - 29 year olds)"
           
         }
         else{
           
-          subtitle <- "Source: Young People and COVID-19 2020, n = 4189"
+          subtitle <- "Source: Young People and COVID-19 2020, n = 4189 (12 - 29 year olds)"
         }
     
        # only relevant for old method
@@ -409,7 +429,7 @@ document.querySelectorAll('button.action').forEach(button =>
         hc <-   highchart() %>%   #hc_opts = list(lang = list(contextButtonTitle = "Chart Download"))
             hc_xAxis(labels = list(style = list(fontSize = "16px"))) %>% 
             hc_yAxis(labels= list(format = "{value} %", style = list(fontSize = "16px"))) %>%
-            hc_chart(type = switch, events = list(load = hover))%>%
+            hc_chart(type = switch) %>% #, events = list(load = hover))%>%
             hc_colors(colors) %>% 
             hc_title(style = list(fontSize = "18px")) %>%
             hc_subtitle(text = i18n$t(subtitle)) %>%
@@ -433,7 +453,7 @@ document.querySelectorAll('button.action').forEach(button =>
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days."))%>%
             hc_tooltip(headerFormat = '<span style="font-size:16px"><b>{point.key}{point.n}</b></span><table>',pointFormatter= JS("function () { return  '<tr><td style = color:'+ this.color +';font-size:16px;padding:0;>'  +'</td>'+ '<td style =font-size:16px;padding:0;>' +'<b>' + this.y.toFixed(1) +'%' +'</td>' + '<td>'+ '<b/>' + ' \u00B1' + (this.se *2*100).toFixed(1)  + '%' + '</b>'+ '</td>'+'</tr>';  }"), shared= TRUE,footerFormat = '{series.n}{this.se}</table> ',useHTML =T) %>%
 
-            hc_add_series(df019, "column",hcaes(x = Var1, y = round(Freq,4)*100),showInLegend = FALSE,
+            hc_add_series(mutate(df019, Var1= i18n$t(Var1)), "column",hcaes(x = Var1, y = round(Freq,4)*100),showInLegend = FALSE,
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -447,7 +467,7 @@ document.querySelectorAll('button.action').forEach(button =>
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by age."))%>%
             
-            hc_add_series(mutate(df_age19, Age_Cat = i18n$t(df_age19$Age_Cat)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Age_Cat),
+            hc_add_series(mutate(df_age19,Var1 = i18n$t(df_age19$Var1), Age_Cat = i18n$t(df_age19$Age_Cat)), "column",hcaes(x = Var1, y = Freq*100, group = Age_Cat),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -459,7 +479,7 @@ document.querySelectorAll('button.action').forEach(button =>
           
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by gender."))%>%
-            hc_add_series(mutate(df_gender19, Gender = i18n$t(df_gender19$Gender)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Gender)) %>%
+            hc_add_series(mutate(df_gender19, Var1= i18n$t(Var1), Gender = i18n$t(df_gender19$Gender)), "column",hcaes(x = Var1, y = Freq*100, group = Gender)) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
             #            hcaes(x = ShareType, low = lower, high = upper, group = Gender)) %>%
@@ -471,7 +491,7 @@ document.querySelectorAll('button.action').forEach(button =>
           
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by status."))%>%
-            hc_add_series(mutate(df_status19, status = i18n$t(df_status19$status)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = status),
+            hc_add_series(mutate(df_status19,Var1= i18n$t(Var1),  status = i18n$t(df_status19$status)), "column",hcaes(x = Var1, y = Freq*100, group = status),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -494,7 +514,7 @@ document.querySelectorAll('button.action').forEach(button =>
                 # hc_xAxis(categories = dfn$name ,additonialInfo = 1:4 ) %>% 
                 # hc_add_series(name= " ",data =l2$dfn[c("name","y")] ,showInLegend = F)
           
-          hc_add_series(df020F, "column",hcaes(x = i18n$t(Var1), y = round(Freq,4)*100),showInLegend = F,
+          hc_add_series(mutate(df020F, Var1= i18n$t(Var1)), "column",hcaes(x = Var1, y = round(Freq,4)*100),showInLegend = F,
                         tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -515,7 +535,7 @@ document.querySelectorAll('button.action').forEach(button =>
             #     hc_add_series(name= i18n$t("Employed"),data =df2$y1 ) %>%
             #     hc_add_series(name= i18n$t("NEET"), data =df2$y2) 
           
-          hc_add_series(mutate(df_status20F, status = i18n$t(df_status20F$status)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = status),
+          hc_add_series(mutate(df_status20F,Var1= i18n$t(Var1),  status = i18n$t(df_status20F$status)), "column",hcaes(x = Var1, y = Freq*100, group = status),
                         tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -538,7 +558,7 @@ document.querySelectorAll('button.action').forEach(button =>
             #     #hc_add_series(type= "errorbar",linkedTo = i18n$t("12-16"), data= list(c(20,60),c(20,30),c(20,40)))
             #    # hc_add_series(name= i18n$t("24-29"),type= "errorbar", data= map(ma[3,],.f = function(x) x+ c(-1.96,1.96)*sqrt((x/100*(1-x/100)/1000))*100))
             # 
-          hc_add_series(mutate(df_age20F, Age_Cat = i18n$t(df_age20F$Age_Cat)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Age_Cat),
+          hc_add_series(mutate(df_age20F,Var1= i18n$t(Var1),  Age_Cat = i18n$t(df_age20F$Age_Cat)), "column",hcaes(x = Var1, y = Freq*100, group = Age_Cat),
                         tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -557,7 +577,7 @@ document.querySelectorAll('button.action').forEach(button =>
                 # hc_xAxis(categories = df3$name) %>% 
                 # hc_add_series(name= i18n$t("Female"), data =df3$y )%>%
                 # hc_add_series(name= i18n$t("Male"),data =df3$y1 )
-            hc_add_series(mutate(df_gender20F, Gender = i18n$t(df_gender20F$Gender)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Gender),
+            hc_add_series(mutate(df_gender20F,Var1= i18n$t(Var1),  Gender = i18n$t(df_gender20F$Gender)), "column",hcaes(x = Var1, y = Freq*100, group = Gender),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -577,7 +597,7 @@ document.querySelectorAll('button.action').forEach(button =>
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days."))%>%
             hc_tooltip(headerFormat = '<span style="font-size:16px"><b>{point.key}{point.n}</b></span><table>',pointFormatter= JS("function () { return  '<tr><td style = color:'+ this.color +';font-size:16px;padding:0;>'  +'</td>'+ '<td style =font-size:16px;padding:0;>' +'<b>' + this.y.toFixed(1) +'%' +'</td>' + '<td>'+ '<b/>' + ' \u00B1' + (Math.sqrt(((this.y/100)*(1-(this.y/100)))  /1000)*2*100).toFixed(1) + '%' + '</b>'+ '</td>'+'</tr>';  }"), shared= TRUE,footerFormat = '{series.n}{this.n}</table> ',useHTML =T) %>%
             
-            hc_add_series(mutate(df020, Freq = round(df020$Freq-df019$Freq,4),se = df019$se), "column",hcaes(x = i18n$t(Var1), y = Freq*100),showInLegend = FALSE,
+            hc_add_series(mutate(df020,Var1 = i18n$t(Var1), Freq = round(df020$Freq-df019$Freq,4),se = df019$se), "column",hcaes(x = Var1, y = Freq*100),showInLegend = FALSE,
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -590,7 +610,7 @@ document.querySelectorAll('button.action').forEach(button =>
           
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by age."))%>%
-            hc_add_series(mutate(df_age20, Freq = df_age20$Freq-df_age19$Freq,se = df_age19$se, Age_Cat = i18n$t(df_age20$Age_Cat)), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Age_Cat),
+            hc_add_series(mutate(df_age20,Var1= i18n$t(Var1),  Freq = df_age20$Freq-df_age19$Freq,se = df_age19$se, Age_Cat = i18n$t(df_age20$Age_Cat)), "column",hcaes(x = Var1, y = Freq*100, group = Age_Cat),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -602,7 +622,7 @@ document.querySelectorAll('button.action').forEach(button =>
           
           hc %>%
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by gender."))%>%
-            hc_add_series(mutate(df_gender20, Freq = df_gender20$Freq-df_gender19$Freq,se = df_gender19$se,Gender = i18n$t(df_gender20$Gender) ), "column",hcaes(x = i18n$t(Var1), y = Freq*100, group = Gender)) %>%
+            hc_add_series(mutate(df_gender20,Var1= i18n$t(Var1),  Freq = df_gender20$Freq-df_gender19$Freq,se = df_gender19$se,Gender = i18n$t(df_gender20$Gender) ), "column",hcaes(x = Var1, y = Freq*100, group = Gender)) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
             #            hcaes(x = ShareType, low = lower, high = upper, group = Gender)) %>%
@@ -615,7 +635,7 @@ document.querySelectorAll('button.action').forEach(button =>
           hc %>%
 
             hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days by status."))%>%
-            hc_add_series(mutate(df_status20, Freq = df_status20$Freq - df_status19$Freq, se = df_status19$se, status = i18n$t(df_status20$status) ), "column",hcaes(x = i18n$t(Var1), y = round(Freq,4)*100, group = status),
+            hc_add_series(mutate(df_status20, Var1= i18n$t(Var1), Freq = df_status20$Freq - df_status19$Freq, se = df_status19$se, status = i18n$t(df_status20$status) ), "column",hcaes(x = Var1, y = round(Freq,4)*100, group = status),
                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}')) %>%
             #hc_add_series(df, "errorbar", stemWidth = 1,  whiskerLength = 10, grouping = FALSE,
             #             centerInCategory = TRUE, groupPadding = .68,
@@ -629,83 +649,17 @@ document.querySelectorAll('button.action').forEach(button =>
         
     })
     
-    
-# works but ugly updates    
-#     output$back_content <- renderUI({
-#       
-#     
-#       tagList(column(12,tags$body(HTML(i18n$t('<h4 style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/youth-survey/">Youth Survey Luxembourg</a></h4>
-# <p style="text-align: justify;">The Youth Survey Luxembourg is a representative, large-scale survey of Luxembourg residents.</p>
-# <p style="text-align: justify;">The target population of the Youth Survey Luxembourg 2019 is comprised of residents of Luxembourg who are 16&ndash;29 years old, regardless of their nationality or country of birth. Sampling frame and sources of information Data provided by the Institut National de la Statistique et des Etudes Economiques du Grand-Duch&eacute; de Luxembourg (STATEC) was used for sampling and weighting calculations for the Youth Survey Luxembourg.</p>
-# <h4 class="LC20lb DKV0Md" style="text-align: center;"><a href="https://www.jugend-in-luxemburg.lu/yac-plus/"> Young People and COVID-19 (YAC+)</a></h4>
-# <p style="text-align: justify;">To assess the situation during and after the pandemic, two surveys will be conducted in 2020 and 2021 based on the Youth Survey Luxembourg 2019 and in close collaboration with the research group of the Child and Adolescent Health Study "<a href="https://www.jugend-in-luxemburg.lu/hbsc-kooperation/">Health Behavior in School-Aged Children</a>".</p>
-# <div class="elementor-element elementor-element-289e4d2 elementor-widget elementor-widget-text-editor" data-id="289e4d2" data-element_type="widget" data-widget_type="text-editor.default">
-# <div class="elementor-widget-container">
-# <div class="elementor-text-editor elementor-clearfix">
-# <p style="text-align: justify;">For YAC+, this group will be supplemented with children and adolescents aged 12 to 16. Thus, the age group of 12 to 29 years old can be surveyed.</p>
-# <p style="text-align: justify;">These standardized surveys will be supplemented by qualitative interviews to gain a deeper understanding of the situation and subjective evaluations of adolescents and young adults.</p>
-# </div>
-# </div>
-# </div>')))))
-#     }
-#     ) 
+
       
     
     # observe -----------------------------------------------------------------
     #ClickFunction <- JS("function(event) {Shiny.onInputChange('Clicked', event.point.category);}") # sollte man global regeln
     
     
-    #map   -------------
-    
-    # unNonce <- function(f) {
-    #     x <-  as.integer(input[[f]][1])  #auf doppel [[]] achten, weil single object??? # ist eine Liste; deshalb as.integer
-    #     print(x)
-    #     print("^")
-    #     return(x)
-    # } 
-
-    # #map render observe event
-    # worldgeojson<-  convertMap("https://code.highcharts.com/mapdata/countries/lu/lu-all.js")
-    # observeEvent(input$Clicked, 
-    #              if (req(unNonce("Clicked") == "1" | unNonce("Clicked") == "2")) {
-    #                  Clicked <- unNonce("Clicked")
-    #                  click("btn-1-front",F)
-    #                  delay(500,
-    #                        output$hcchart2 <-  renderHighchart({
-    #                            print(typeof(Clicked))
-    #                            dfn <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,26,91,90,89) )
-    #                            dfx <- tibble(name = i18n$t(c("Being Born in Lux.","Having Lux. Ancestors","Speaking Lux. Well","Lived for a long time in Lux.","Identifying with Lux.")),y = c(49,35,90,82,82), y1 = c (51,24,82,81,81),y2= c(37,36,76,80,82) )
-    #                            df_l  <- lst(dfn,dfx)
-    #                            print(head(df_l))
-    #                            l2<-lapply(df_l, function(df) 
-    #                                cbind(df, b = df$y *1.1, c = df$y *1.2, d = df$y *0.7))
-    #                            highchart(type = "map") %>% 
-    #                                
-    #                                hc_add_series_map(map =worldgeojson, df= data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"),  value =as.vector(unlist(l2[[Clicked]][2,3:5]))), value = "value", joinBy = "name", name = "test") %>%
-    #                                
-    #                                #hcmap(map= "countries/lu/lu-all", data =data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"), value =as.vector(unlist(l2[[input$Clicked]][2,3:5]))), value = "value", joinBy = "name") %>%   #unlist oder flatten aus purrr
-    #                                hc_plotOptions(series = list(#column = list(stacking = "normal"), 
-    #                                    borderWidth=0,
-    #                                    dataLabels = list(style = list(fontSize = "14px"),enabled = TRUE),
-    #                                    events = list(click = ClickFunction)))  %>%
-    #                                hc_credits(enabled = F) %>%
-    #                                hc_title(text = list(l2[[Clicked]][2,1])) %>%
-    #                                hc_legend(enabled = T)
-    #                            
-    #                        })
-    #                  )
-    #                  
-    #                  #session$sendCustomMessage('Clicked', "Shiny.setInputValue('Clicked', '0');")
-    #                  print(paste("jidw",input$Clicked))
-    #                  print(paste("-->", unNonce("Clicked"),"<<-"))
-    #                  print(paste("m",input$Clicked[1]))}
-    # )
-    # 
-    # 
-    # custom session message for rotation ---------------------------------------------
     
     
-    delay(10000, print(paste0(input$Clicked)))
+    
+    delay(10000, print(paste0(input$Clicked))) #monitor
     fxn <- "click"
     fxn <- paste0("shinyjs-", fxn)
     params <- list(id = "btn-1-front", asis = TRUE)
@@ -720,12 +674,7 @@ document.querySelectorAll('button.action').forEach(button =>
     # observe(input$btn-1-front, print("fj"))
     
     
-    # highchart(type = "map") %>% 
-    #   hc_plotOptions(map = list(mapData = worldgeojson)) %>%
-    #   hc_add_series( data= data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"),  value =as.vector(unlist(l2[[1]][2,3:5]))), value = "value", joinBy = "name", name = "test") %>%
-    # hc_add_series_map(map =worldgeojson, df= data.frame(name= c("Diekirch","Grevenmacher","Luxembourg"),  value =as.vector(unlist(l2[[1]][2,3:5]))), value = "value", joinBy = "name", name = "test")
-    #   
-    
+
     
     
     
@@ -789,15 +738,15 @@ document.querySelectorAll('button.action').forEach(button =>
         delay(700,{runjs(i18n_html)}) # delay wegen Reihenfolge nötig. Change language, dann neu setzen. js_code is für translation workaround notwendig. i18n setzt html als plain ein. Nicht als HTML. 
     })
     
-    
-    observeEvent(input$mydata,{
-      if (input$mydata == 116) {
-        print("works")
-        browseURL("https://hdbt.shinyapps.io/translate/")
-        
-      }
-      print(input$mydata)
-    })
+    #doesnt work in deployed applications
+    # observeEvent(input$mydata,{  
+    #   if (input$mydata == 116) {
+    #     print("works")
+    #     browseURL("https://hdbt.shinyapps.io/translate/")
+    #     
+    #   }
+    #   print(input$mydata)
+    # })
 
     #reactivce translations for ui buttons
     # i18n_r <- reactive({
