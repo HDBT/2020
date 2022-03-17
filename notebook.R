@@ -294,7 +294,8 @@ for(var i=0; i<i18n_translations.length; i++){
     i18n_translations[i][obj[j]] = decodeEntities(i18n_translations[i][obj[j]]);
     
   }
-}
+} 
+'
 
 
 
