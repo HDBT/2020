@@ -447,7 +447,7 @@ document.querySelectorAll('button.action').forEach(button =>
         #switch <- switch(input$switch, TRUEE = "column", "FALSE" = "column", "column")
         
         source("highchart_server.R", local = T)
-        highchart_server()
+        highchart_server(diff = TRUE, input1 = i18n$t(input$test) , input_choices1 =  i18n_r()$t(c("None", "Age", "Gender", "Status")), input2 = i18n$t(input$thema), input_choices2 = i18n$t(c("2019", "2020", "Differences")), df_set1 = list(df019, df_age19, df_gender19, df_status19), df_set2 = list(df020F,df_status20F,df_age20F,df_gender20F), df_set3 = list(df020, df_age20, df_gender20, df_status20) )  
         
         
     })
