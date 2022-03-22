@@ -1,14 +1,35 @@
 
+# @diff: should differences of two datasets be calculated? Remember to prepare the datasets to be eqaually in demographic characteristics!
+# @input1: provide row var input. E.g. input$test
+# @input_choices: provide exact set chouces in input. Note for me: set this automatically.
+# @input2: provide col var input. E.g. input$thema
+# @input_choices: provide exact set choices in input. Note for me: set this automatically in future updates.
+# @df_set1: provide prepared dfs as list() in exact order to be displayed from top to bottom. Note for me: change prep routine to make this obsolete.
+# @df_set2: provide prepared dfs as list() in exact order to be displayed from top to bottom. Note for me: change prep routine to make this obsolete.
+# @df_set3: provide prepared dfs as list() in exact order to be displayed from top to bottom. Note for me: change prep routine to make this obsolete.
+# @title: provide list with titles to be used. 
+# @diff_positon: provide numeric vector to specify the df_sets, which should be substracted. Default = c(1,3)
 
 # Refactoring Outpout  ----------------------------------------------------
 library(purrr)
-highchart_server  <- function(diff = FALSE, input1 = character(), input_choices1 = character(), input2 = NULL, input_choices2 = NULL, df_set1 = character(), df_set2 = NULL, df_set3 = NULL, title = character(), ...) {
+
+highchart_server  <- function(diff = FALSE, input1 = character(), input_choices1 = character(), input2 = NULL, input_choices2 = NULL, df_set1 = character(), df_set2 = NULL, df_set3 = NULL, title = character(), diff_position = c(1,3), ...) {
+  source("config.R", local =  T)
+  try
+  walk(list.files( pattern = "*.RData"), function(x) load(x, envir = .GlobalEnv))
+  
+  input1 <- i18n$t(input1)
+  input_choices1 <- i18n$t(input_choices1)
+  input2 <- i18n$t(input2)
+  input_choices2 <- i18n$t(input_choices2)
+  
   index1 <- match(input1, input_choices1)
   print(paste("index1", index1))    #test
   if (!is.null(input2)) {
     index2 <- match(input2, input_choices2)
     print(paste("index2", index2))    #test
   }
+  # standard df
   try({
     df_list <- map(list(df_set1,df_set2,df_set3), list)
     print("pre str", str(df))                  #test
@@ -18,11 +39,15 @@ highchart_server  <- function(diff = FALSE, input1 = character(), input_choices1
   }
   )
   
-  if (diff == TRUE & index2 == length(index2)) {
+  # cond. df diff variation
+  pos1 <-  diff_position[1]
+  pos2 <-  diff_position[2]
+  if (diff == TRUE & index2 == pos2) {
     try({
+      print(paste("position index", pos1,pos2))
       df_pre <- map(list(df_set1,df_set2,df_set3), list)
       print("pre str_pre", str(df_pre))                  #test
-      df_pre <- df_pre[[1]][[1]][[index1]]         # eventuell als Arg?
+      df_pre <- df_pre[[pos1]][[1]][[index1]]         # eventuell als Arg?
       #print("structure", str(df))                  # test
       #df <- as_tibble(df)
       df <- df_pre %>% mutate(Freq = df$Freq - df_pre$Freq, se = se  )
@@ -39,20 +64,25 @@ highchart_server  <- function(diff = FALSE, input1 = character(), input_choices1
   
   print(df)                  # test
   #print("Var1" ,as.character(df[["Var1"]])) # test
-    
+  
+  # create matrix for title string vector for indexing
+  dim(title) <- c(length(input_choices1), length(input_choices2))
+  
   if (index1 == 1) {
     hc %>%  hc_tooltip(headerFormat = '<span style="font-size:16px"><b>{point.key}{point.n}</b></span><table>',pointFormatter = JS("function () { return  '<tr><td style = color:'+ this.color +';font-size:16px;padding:0;>'  +'</td>'+ '<td style =font-size:16px;padding:0;>' +'<b>' + this.y.toFixed(1) +'%' +'</td>' + '<td>'+ '<b/>' + ' \u00B1' + (this.se *2*100).toFixed(1)  + '%' + '</b>'+ '</td>'+'</tr>';  }"), shared = TRUE,footerFormat = '{series.n}{this.se}</table> ',useHTML = TRUE) %>%
     hc_xAxis(categories = i18n$t(df[["Var1"]]))  %>%
+    hc_title(text = i18n$t( title[index1,index2])) %>%
     hc_add_series(df, "column",hcaes(x = Var1, y = round(Freq,4)*100), showInLegend = FALSE,
                                                           tooltip = list(enabled = TRUE,pointFormat = '${point.y}'))
   }
   
   else {
     
-    hc %>% hc_title(text = i18n$t("Percentage of those who indicated to have consumed one of the following psychoactive substances at least once in the past 30 days.")) %>%
+    hc %>% 
     hc_add_series(df, "column",hcaes(x = Var1, y = round(Freq,4)*100,  group = Cats),showInLegend = FALSE,
                   tooltip = list(enabled = TRUE,pointFormat = '${point.y}'))  %>%
-    hc_xAxis(categories = unique(i18n$t(df$Var1)))
+    hc_title(text = i18n$t( title[index1,index2])) %>%
+    hc_xAxis(categories = unique(i18n$t(df$Var1))) 
   }
   
   

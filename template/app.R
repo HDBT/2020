@@ -39,11 +39,11 @@ options(shiny.reactlog = T)
 #options(shiny.error = browser)
 #install.packages("shinycustomloader")
 # For dropdown menu #useless?
-load("data.RData",envir = .GlobalEnv)
-load("data19.RData",envir = .GlobalEnv)
-load("data19_Diff.RData",envir = .GlobalEnv)
-load("data20_Diff.RData",envir = .GlobalEnv)
-load("data20_full.RData",envir = .GlobalEnv)
+# load("data.RData",envir = .GlobalEnv)
+# load("data19.RData",envir = .GlobalEnv)
+# load("data19_Diff.RData",envir = .GlobalEnv)
+# load("data20_Diff.RData",envir = .GlobalEnv)
+# load("data20_full.RData",envir = .GlobalEnv)
 
 actionLink <- function(inputId, ...) {
     tags$a(href='javascript:void',
@@ -392,22 +392,22 @@ document.querySelectorAll('button.action').forEach(button =>
     # Tab2 Vis ----------------------------------------------------------------
     output$hcchart1 <- renderHighchart({
       
-    #switch proxy für charttype
-        if (input$switch == T)
-        {switch <-"column"
-        } else { switch <- "bar"
-        }  
-        if (input$thema == i18n_r()$t("2019") ){
-          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 (16 - 29 year olds)"
-        } 
-        else if (input$thema == i18n_r()$t("Differences")) {
-          subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 & Young People and COVID-19 2020, n = 3562 (16 - 29 year olds)"
-          
-        }
-        else{
-          
-          subtitle <- "Source: Young People and COVID-19 2020, n = 4189 (12 - 29 year olds)"
-        }
+      #switch proxy für charttype
+      if (input$switch == T)
+      {switch <-"column"
+      } else { switch <- "bar"
+      }  
+      if (input$thema == i18n_r()$t("2019") ){
+        subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 (16 - 29 year olds)"
+      } 
+      else if (input$thema == i18n_r()$t("Differences")) {
+        subtitle <- "Source: Youth Survey Luxembourg 2019, n = 2593 & Young People and COVID-19 2020, n = 3562 (16 - 29 year olds)"
+        
+      }
+      else{
+        
+        subtitle <- "Source: Young People and COVID-19 2020, n = 4189 (12 - 29 year olds)"
+      }
     
        # only relevant for old method
         # dfn <- tibble(name = i18n$t(c("Alcohol","Tobacco","Cannabis")),y = asc )
@@ -447,7 +447,7 @@ document.querySelectorAll('button.action').forEach(button =>
         #switch <- switch(input$switch, TRUEE = "column", "FALSE" = "column", "column")
         
         source("highchart_server.R", local = T)
-        highchart_server(diff = TRUE, input1 = i18n$t(input$test) , input_choices1 =  i18n_r()$t(c("None", "Age", "Gender", "Status")), input2 = i18n$t(input$thema), input_choices2 = i18n$t(c("2019", "2020", "Differences")), df_set1 = list(df019, df_age19, df_gender19, df_status19), df_set2 = list(df020F,df_status20F,df_age20F,df_gender20F), df_set3 = list(df020, df_age20, df_gender20, df_status20) )  
+        highchart_server()
         
         
     })
